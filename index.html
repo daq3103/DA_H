@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MotoShop - Cửa Hàng Xe Máy Chính Hãng</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- Top Bar -->
+    <div class="top-bar py-2 d-none d-lg-block">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6 text-light text-opacity-75 small">
+                    <i class="fas fa-map-marker-alt me-2"></i> 123 Đường Cầu Diễn, Bắc Từ Liêm, Hà Nội
+                </div>
+                <div class="col-md-6 text-end text-light text-opacity-75 small">
+                    <i class="fas fa-envelope me-2"></i> contact@motoshop.vn
+                    <span class="mx-3">|</span>
+                    <i class="fas fa-phone-alt me-2"></i> Hotline: <strong>0988.123.456</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header / Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm py-3">
+        <div class="container">
+            <a class="navbar-brand fw-bold fs-3 text-primary-moto d-flex align-items-center" href="index.html">
+                <i class="fas fa-motorcycle me-2"></i> MotoShop
+            </a>
+            
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav mx-auto mb-2 mb-lg-0 fw-medium">
+                    <li class="nav-item">
+                        <a class="nav-link active px-3" aria-current="page" href="index.html">Trang chủ</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle px-3" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Sản phẩm
+                        </a>
+                        <ul class="dropdown-menu border-0 shadow-sm" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item py-2" href="products.html?brand=honda">Honda</a></li>
+                            <li><a class="dropdown-item py-2" href="products.html?brand=yamaha">Yamaha</a></li>
+                            <li><a class="dropdown-item py-2" href="products.html?category=xe-tay-ga">Xe Tay Ga</a></li>
+                            <li><a class="dropdown-item py-2" href="products.html?category=xe-con-tay">Xe Côn Tay</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item py-2 fw-bold text-primary-moto" href="products.html">Xem tất cả xe</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3" href="news.html">Tin tức</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3" href="contact.html">Liên hệ</a>
+                    </li>
+                </ul>
+
+                <div class="d-flex align-items-center gap-3 mt-3 mt-lg-0">
+                    <form class="position-relative d-none d-lg-block">
+                        <input class="form-control rounded-pill pe-5 bg-light border-0" type="search" placeholder="Tìm kiếm xe..." aria-label="Search">
+                        <button class="btn position-absolute top-50 end-0 translate-middle-y text-muted border-0" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </form>
+                    
+                    <a href="cart.html" class="position-relative text-dark fs-5 head-icon-btn d-flex align-items-center justify-content-center">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem;">
+                            0
+                        </span>
+                    </a>
+                    
+                    <div id="user-auth-area" class="position-relative">
+                        <!-- JS sẽ render login/register hoặc user dropdown -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Banner Carousel -->
+    <div id="heroCarousel" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-indicators">
+            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
+            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2" aria-label="Slide 3"></button>
+        </div>
+        <div class="carousel-inner">
+            <!-- Slide 1 -->
+            <div class="carousel-item active">
+                <div class="hero-slide d-flex align-items-center" style="background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1568772585407-9361f9bf3c87?q=80&w=2070&auto=format&fit=crop');">
+                    <div class="container text-white">
+                        <div class="row">
+                            <div class="col-lg-7 slide-content-animate">
+                                <span class="badge bg-primary-moto px-3 py-2 mb-3 fs-6 rounded-pill">Mới Ra Mắt 2024</span>
+                                <h1 class="display-3 fw-bold mb-3">Honda Winner X 2024</h1>
+                                <p class="lead mb-4 opacity-75">Bứt phá giới hạn, khẳng định phong cách với khối động cơ DOHC mạnh mẽ và thiết kế thể thao không thỏa hiệp.</p>
+                                <div class="d-flex gap-3">
+                                    <a href="product-detail.html?id=1" class="btn btn-moto-primary btn-lg rounded-pill px-4 fw-medium">Xem Chi Tiết</a>
+                                    <a href="contact.html" class="btn btn-outline-light btn-lg rounded-pill px-4 fw-medium">Nhận Tư Vấn</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Slide 2 -->
+            <div class="carousel-item">
+                <div class="hero-slide d-flex align-items-center" style="background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1449426468159-d96dbf08f19f?q=80&w=2070&auto=format&fit=crop');">
+                    <div class="container text-white">
+                        <div class="row">
+                            <div class="col-lg-7 slide-content-animate">
+                                <span class="badge bg-primary-moto px-3 py-2 mb-3 fs-6 rounded-pill">Chương Trình Khuyến Mãi</span>
+                                <h1 class="display-3 fw-bold mb-3">Ưu đãi lên đến 5 Tr</h1>
+                                <p class="lead mb-4 opacity-75">Sở hữu ngay các dòng xe côn tay Yamaha Exciter với mức giá cực kỳ hấp dẫn cùng nhiều quà tặng giá trị trong tháng này.</p>
+                                <div class="d-flex gap-3">
+                                    <a href="products.html?brand=yamaha" class="btn btn-moto-primary btn-lg rounded-pill px-4 fw-medium">Khám Phá Ngay</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Slide 3 -->
+            <div class="carousel-item">
+                <div class="hero-slide d-flex align-items-center" style="background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1558981403-c5f9899a28bc?q=80&w=2070&auto=format&fit=crop');">
+                    <div class="container text-white">
+                        <div class="row">
+                            <div class="col-lg-7 slide-content-animate">
+                                <span class="badge bg-primary-moto px-3 py-2 mb-3 fs-6 rounded-pill">Xe Tay Ga Cao Cấp</span>
+                                <h1 class="display-3 fw-bold mb-3">Phong Cách Thanh Lịch</h1>
+                                <p class="lead mb-4 opacity-75">Tự tin dạo phố với các dòng xe tay ga đẳng cấp châu Âu. Động cơ êm ái, tiết kiệm nhiên liệu, tiện ích vượt trội.</p>
+                                <div class="d-flex gap-3">
+                                    <a href="products.html?category=xe-tay-ga" class="btn btn-moto-primary btn-lg rounded-pill px-4 fw-medium">Khám Phá Mẫu Xe</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+            <span class="carousel-nav-icon"><i class="fas fa-chevron-left"></i></span>
+            <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+            <span class="carousel-nav-icon"><i class="fas fa-chevron-right"></i></span>
+            <span class="visually-hidden">Next</span>
+        </button>
+    </div>
+
+    <!-- Features Section -->
+    <section class="py-5 bg-white border-bottom">
+        <div class="container">
+            <div class="row g-4 text-center">
+                <div class="col-md-3 col-6">
+                    <div class="feature-box p-3">
+                        <div class="icon-circle mx-auto mb-3 bg-light text-primary-moto d-flex align-items-center justify-content-center fs-3 rounded-circle" style="width: 70px; height: 70px;">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h5 class="fw-bold fs-6">Bảo Hành Chính Hãng</h5>
+                        <p class="text-muted small mb-0">Thời gian 3 năm hoặc 30,000km</p>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="feature-box p-3">
+                        <div class="icon-circle mx-auto mb-3 bg-light text-primary-moto d-flex align-items-center justify-content-center fs-3 rounded-circle" style="width: 70px; height: 70px;">
+                            <i class="fas fa-tools"></i>
+                        </div>
+                        <h5 class="fw-bold fs-6">Phụ Tùng Chính Hiệu</h5>
+                        <p class="text-muted small mb-0">Cam kết 100% linh kiện chuẩn</p>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="feature-box p-3">
+                        <div class="icon-circle mx-auto mb-3 bg-light text-primary-moto d-flex align-items-center justify-content-center fs-3 rounded-circle" style="width: 70px; height: 70px;">
+                            <i class="fas fa-truck"></i>
+                        </div>
+                        <h5 class="fw-bold fs-6">Giao Xe Tận Nhà</h5>
+                        <p class="text-muted small mb-0">Miễn phí nội thành Hà Nội</p>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="feature-box p-3">
+                        <div class="icon-circle mx-auto mb-3 bg-light text-primary-moto d-flex align-items-center justify-content-center fs-3 rounded-circle" style="width: 70px; height: 70px;">
+                            <i class="fas fa-headset"></i>
+                        </div>
+                        <h5 class="fw-bold fs-6">Hỗ Trợ 24/7</h5>
+                        <p class="text-muted small mb-0">Hotline luôn sẵn sàng giải đáp</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- New Arrivals Section -->
+    <section class="py-5 bg-light">
+        <div class="container py-4">
+            <div class="d-flex justify-content-between align-items-end mb-4">
+                <div>
+                    <h6 class="text-primary-moto fw-bold text-uppercase mb-1 tracking-wide">Khám phá ngay</h6>
+                    <h2 class="fw-bold h1 mb-0">Xe Mới Về</h2>
+                </div>
+                <a href="products.html" class="btn btn-outline-dark rounded-pill px-4 fw-medium d-none d-md-block">Xem Tất Cả <i class="fas fa-arrow-right ms-2"></i></a>
+            </div>
+
+            <div class="row g-4" id="new-arrivals-container">
+                <!-- Data will be loaded via JS -->
+                <div class="col-12 text-center py-5">
+                    <div class="spinner-border text-primary-moto" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4 d-block d-md-none">
+                <a href="products.html" class="btn btn-outline-dark rounded-pill px-4 fw-medium w-100">Xem Tất Cả</a>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Promotion Banner -->
+    <section class="py-5">
+        <div class="container">
+            <div class="row rounded-4 overflow-hidden shadow-lg mx-0" style="background-color: #1a1a1a;">
+                <div class="col-lg-6 p-0">
+                    <img src="https://images.unsplash.com/photo-1558981806-ec527fa84c39?q=80&w=2070&auto=format&fit=crop" alt="Promotion" class="img-fluid h-100 object-fit-cover" style="min-height: 350px;">
+                </div>
+                <div class="col-lg-6 p-5 p-lg-5 d-flex flex-column justify-content-center text-white">
+                    <span class="text-primary-moto fw-bold text-uppercase mb-2">Chương Trình Đặc Biệt</span>
+                    <h3 class="display-6 fw-bold mb-3">Sống Trọn Đam Mê Cùng Dòng Xe Phân Khối Lớn</h3>
+                    <p class="opacity-75 mb-4 mb-lg-5">Sở hữu ngay các siêu phẩm moto với ưu đãi trả góp lãi suất 0%. Trải nghiệm tốc độ đích thực và thiết kế hầm hố phá cách.</p>
+                    <div>
+                        <a href="products.html?category=pkl" class="btn btn-moto-primary btn-lg rounded-pill px-4">Đăng Ký Lái Thử Định Kỳ</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Hot Sales Section -->
+    <section class="py-5 bg-white border-top">
+        <div class="container py-4">
+            <div class="text-center mb-5">
+                <h6 class="text-primary-moto fw-bold text-uppercase mb-1 tracking-wide">Được yêu thích nhất</h6>
+                <h2 class="fw-bold h1 mb-0">Xe Bán Chạy</h2>
+            </div>
+
+            <div class="row g-4" id="hot-cars-container">
+                <!-- Data will be loaded via JS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white pt-5 pb-3">
+        <div class="container pt-4">
+            <div class="row g-4 mb-5">
+                <div class="col-lg-4 col-md-6 pe-lg-5">
+                    <a class="navbar-brand fw-bold fs-3 text-white d-flex align-items-center mb-4" href="index.html">
+                        <i class="fas fa-motorcycle text-primary-moto me-2"></i> MotoShop
+                    </a>
+                    <p class="opacity-75 mb-4">Đại lý phân phối xe máy chính hãng toàn quốc. Cam kết chất lượng, bảo hành chuẩn, giá cả cạnh tranh nhất thị trường.</p>
+                    <div class="d-flex gap-3">
+                        <a href="#" class="social-icon bg-white bg-opacity-10 text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; transition: 0.3s;"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="social-icon bg-white bg-opacity-10 text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; transition: 0.3s;"><i class="fab fa-youtube"></i></a>
+                        <a href="#" class="social-icon bg-white bg-opacity-10 text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; transition: 0.3s;"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+                
+                <div class="col-lg-2 col-md-6">
+                    <h5 class="fw-bold mb-4">Liên Kết Nhanh</h5>
+                    <ul class="list-unstyled footer-links">
+                        <li class="mb-2"><a href="index.html" class="text-white opacity-75 text-decoration-none hover-white">Trang chủ</a></li>
+                        <li class="mb-2"><a href="products.html" class="text-white opacity-75 text-decoration-none hover-white">Sản phẩm</a></li>
+                        <li class="mb-2"><a href="news.html" class="text-white opacity-75 text-decoration-none hover-white">Tin tức</a></li>
+                        <li class="mb-2"><a href="contact.html" class="text-white opacity-75 text-decoration-none hover-white">Liên hệ</a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                    <h5 class="fw-bold mb-4">Hỗ Trợ Khách Hàng</h5>
+                    <ul class="list-unstyled footer-links">
+                        <li class="mb-2"><a href="#" class="text-white opacity-75 text-decoration-none hover-white">Chính sách bảo hành</a></li>
+                        <li class="mb-2"><a href="#" class="text-white opacity-75 text-decoration-none hover-white">Chính sách đổi trả</a></li>
+                        <li class="mb-2"><a href="#" class="text-white opacity-75 text-decoration-none hover-white">Hướng dẫn mua trả góp</a></li>
+                        <li class="mb-2"><a href="#" class="text-white opacity-75 text-decoration-none hover-white">Câu hỏi thường gặp</a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                    <h5 class="fw-bold mb-4">Thông Tin Liên Hệ</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-3 d-flex align-items-start">
+                            <i class="fas fa-map-marker-alt mt-1 me-3 text-primary-moto"></i>
+                            <span class="opacity-75">123 Đường Cầu Diễn, Bắc Từ Liêm, Hà Nội</span>
+                        </li>
+                        <li class="mb-3 d-flex align-items-start">
+                            <i class="fas fa-envelope mt-1 me-3 text-primary-moto"></i>
+                            <span class="opacity-75">contact@motoshop.vn</span>
+                        </li>
+                        <li class="mb-3 d-flex align-items-start">
+                            <i class="fas fa-phone-alt mt-1 me-3 text-primary-moto"></i>
+                            <span class="opacity-75">0988.123.456</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-top border-secondary pt-3 d-flex flex-column flex-md-row justify-content-between align-items-center">
+                <p class="mb-0 opacity-50 small">&copy; 2024 MotoShop. Kịch bản của HUMG_DA.</p>
+                <div class="mt-2 mt-md-0">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal" height="20" class="me-2 opacity-75 bg-white px-1 rounded">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/0/04/Visa.svg" alt="Visa" height="20" class="opacity-75 bg-white px-1 rounded">
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Main JS -->
+    <script src="js/main.js"></script>
+</body>
+</html>

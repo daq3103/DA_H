@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liên Hệ - MotoShop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-light">
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm py-3">
+        <div class="container">
+            <a class="navbar-brand fw-bold fs-3 text-primary-moto d-flex align-items-center" href="index.html">
+                <i class="fas fa-motorcycle me-2"></i> MotoShop
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav mx-auto mb-2 mb-lg-0 fw-medium">
+                    <li class="nav-item"><a class="nav-link px-3" href="index.html">Trang chủ</a></li>
+                    <li class="nav-item"><a class="nav-link px-3" href="products.html">Sản phẩm</a></li>
+                    <li class="nav-item"><a class="nav-link px-3" href="news.html">Tin tức</a></li>
+                    <li class="nav-item"><a class="nav-link active px-3" href="contact.html">Liên hệ</a></li>
+                </ul>
+                <div class="d-flex align-items-center gap-3 mt-3 mt-lg-0">
+                    <a href="cart.html" class="position-relative text-dark fs-5 head-icon-btn d-flex align-items-center justify-content-center">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem;">0</span>
+                    </a>
+                    <div id="user-auth-area" class="position-relative"></div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="bg-dark text-white py-5" style="background-image: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('https://images.unsplash.com/photo-1558981403-c5f9899a28bc?q=80&w=2070'); background-size: cover; background-position: center;">
+        <div class="container text-center py-4">
+            <h1 class="display-4 fw-bold mb-3">Liên Hệ MotoShop</h1>
+            <p class="lead opacity-75">Chúng tôi luôn sẵn sàng hỗ trợ, giải đáp thắc mắc và cung cấp dịch vụ tốt nhất.</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container py-5 my-3">
+        <div class="row g-5">
+            <!-- Contact Info -->
+            <div class="col-lg-5">
+                <h3 class="fw-bold mb-4">Thông Tin Liên Hệ</h3>
+                <p class="text-muted mb-5">Đại lý phân phối xe máy chính hãng toàn quốc. Cam kết chất lượng, bảo hành chuẩn, giá cả cạnh tranh nhất thị trường.</p>
+                
+                <div class="d-flex align-items-start mb-4">
+                    <div class="bg-primary-moto text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 50px; height: 50px;">
+                        <i class="fas fa-map-marker-alt fs-5"></i>
+                    </div>
+                    <div class="ms-3">
+                        <h6 class="fw-bold mb-1">Địa chỉ Showroom</h6>
+                        <p class="text-muted mb-0">123 Đường Cầu Diễn, P. Phúc Diễn, Q. Bắc Từ Liêm, TP. Hà Nội</p>
+                    </div>
+                </div>
+                
+                <div class="d-flex align-items-start mb-4">
+                    <div class="bg-primary-moto text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 50px; height: 50px;">
+                        <i class="fas fa-phone-alt fs-5"></i>
+                    </div>
+                    <div class="ms-3">
+                        <h6 class="fw-bold mb-1">Hotline Hỗ Trợ</h6>
+                        <p class="text-muted mb-0">Tư vấn bán hàng: 0988.123.456<br>Hỗ trợ kỹ thuật (24/7): 0988.654.321</p>
+                    </div>
+                </div>
+                
+                <div class="d-flex align-items-start mb-4">
+                    <div class="bg-primary-moto text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 50px; height: 50px;">
+                        <i class="fas fa-envelope fs-5"></i>
+                    </div>
+                    <div class="ms-3">
+                        <h6 class="fw-bold mb-1">Email KCS & Dịch vụ</h6>
+                        <p class="text-muted mb-0">contact@motoshop.vn<br>service@motoshop.vn</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Form -->
+            <div class="col-lg-7">
+                <div class="bg-white p-4 p-md-5 rounded-4 shadow-sm border">
+                    <h3 class="fw-bold mb-4">Gửi Tin Nhắn Cho Chúng Tôi</h3>
+                    <form onsubmit="handleContact(event)">
+                        <div class="row g-3">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-muted small">Họ và Tên</label>
+                                <input type="text" class="form-control border-secondary-subtle py-2" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-muted small">Số điện thoại</label>
+                                <input type="tel" class="form-control border-secondary-subtle py-2" required>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label class="form-label text-muted small">Email (Không bắt buộc)</label>
+                                <input type="email" class="form-control border-secondary-subtle py-2">
+                            </div>
+                            <div class="col-12 mb-4">
+                                <label class="form-label text-muted small">Nội dung tin nhắn</label>
+                                <textarea class="form-control border-secondary-subtle" rows="5" placeholder="Bạn cần hỗ trợ mua xe hay vấn đề bảo hành?" required></textarea>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-dark w-100 fw-medium py-3 rounded-pill text-uppercase">Gửi Tin Nhắn</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Maps -->
+        <div class="row mt-5 pt-3">
+            <div class="col-12">
+                <div class="rounded-4 overflow-hidden border">
+                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1m2!1m3!1m2!1m1!1s0x313454b32b842a37%3A0xe91a565701d93963!2sHanoi%20University%20of%20Mining%20and%20Geology!5e0!3m2!1sen!2s!4v1700000000000!5m2!1sen!2s" width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function handleContact(e) {
+            e.preventDefault();
+            alert("Cảm ơn bạn đã liên hệ MotoShop. Bộ phận CSKH sẽ gọi lại cho bạn sớm nhất!");
+            e.target.reset();
+        }
+    </script>
+    <script src="js/main.js"></script>
+</body>
+</html>

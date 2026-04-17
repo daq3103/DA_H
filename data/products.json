@@ -1,0 +1,162 @@
+[
+    {
+        "id": 1,
+        "name": "Honda Winner X 2024",
+        "slug": "honda-winner-x-2024",
+        "brand_id": 1,
+        "brand": "Honda",
+        "category_id": 3,
+        "category": "Xe Côn Tay",
+        "price": 50500000,
+        "sale_price": 48500000,
+        "image": "https://images.unsplash.com/photo-1568772585407-9361f9bf3c87?q=80&w=2070&auto=format&fit=crop",
+        "is_hot": true,
+        "is_new": true,
+        "specs": {
+            "engine_type": "DOHC, 4 kỳ, xi-lanh đơn, côn tay",
+            "displacement": "149.1 cc",
+            "max_power": "11.5kW/9,000 vòng/phút",
+            "weight": "122 kg"
+        }
+    },
+    {
+        "id": 2,
+        "name": "Yamaha Exciter 155 VVA",
+        "slug": "yamaha-exciter-155-vva",
+        "brand_id": 2,
+        "brand": "Yamaha",
+        "category_id": 3,
+        "category": "Xe Côn Tay",
+        "price": 51000000,
+        "sale_price": null,
+        "image": "https://images.unsplash.com/photo-1449426468159-d96dbf08f19f?q=80&w=2070&auto=format&fit=crop",
+        "is_hot": true,
+        "is_new": false,
+        "specs": {
+            "engine_type": "SOHC, 4 kỳ, 4 van, làm mát bằng dung dịch",
+            "displacement": "155.1 cc",
+            "max_power": "13.2 kW/9,500 vòng/phút",
+            "weight": "121 kg"
+        }
+    },
+    {
+        "id": 3,
+        "name": "Honda SH 160i 2024",
+        "slug": "honda-sh-160i",
+        "brand_id": 1,
+        "brand": "Honda",
+        "category_id": 1,
+        "category": "Xe Tay Ga",
+        "price": 105000000,
+        "sale_price": 101000000,
+        "image": "https://images.unsplash.com/photo-1558981403-c5f9899a28bc?q=80&w=2070&auto=format&fit=crop",
+        "is_hot": true,
+        "is_new": true,
+        "specs": {
+            "engine_type": "eSP+, 4 kỳ, SOHC, làm mát bằng chất lỏng",
+            "displacement": "156.9 cc",
+            "max_power": "12.4kW/8,500 vòng/phút",
+            "weight": "134 kg"
+        }
+    },
+    {
+        "id": 4,
+        "name": "Honda Vision 2024",
+        "slug": "honda-vision-2024",
+        "brand_id": 1,
+        "brand": "Honda",
+        "category_id": 1,
+        "category": "Xe Tay Ga",
+        "price": 35000000,
+        "sale_price": null,
+        "image": "https://images.unsplash.com/photo-1502680390469-be75c86b636f?q=80&w=2070&auto=format&fit=crop",
+        "is_hot": true,
+        "is_new": false,
+        "specs": {
+            "engine_type": "eSP, 4 kỳ, SOHC",
+            "displacement": "109.5 cc",
+            "max_power": "6.59kW/7,500 vòng/phút",
+            "weight": "94 kg"
+        }
+    },
+    {
+        "id": 5,
+        "name": "Yamaha NVX 155 VVA",
+        "slug": "yamaha-nvx-155",
+        "brand_id": 2,
+        "brand": "Yamaha",
+        "category_id": 1,
+        "category": "Xe Tay Ga",
+        "price": 54500000,
+        "sale_price": 53000000,
+        "image": "https://images.unsplash.com/photo-1604054923518-e491a9a6acbc?q=80&w=2000&auto=format&fit=crop",
+        "is_hot": false,
+        "is_new": true,
+        "specs": {
+            "engine_type": "Blue Core, SOHC, 4 kỳ",
+            "displacement": "155.1 cc",
+            "max_power": "11.3 kW/8,000 vòng/phút",
+            "weight": "125 kg"
+        }
+    },
+    {
+        "id": 6,
+        "name": "Ducati Panigale V4",
+        "slug": "ducati-panigale-v4",
+        "brand_id": 3,
+        "brand": "Ducati",
+        "category_id": 4,
+        "category": "Phân Khối Lớn",
+        "price": 750000000,
+        "sale_price": null,
+        "image": "https://images.unsplash.com/photo-1568772585407-9361f9bf3c87?q=80&w=2070&auto=format&fit=crop",
+        "is_hot": true,
+        "is_new": true,
+        "specs": {
+            "engine_type": "Desmosedici Stradale 90° V4",
+            "displacement": "1103 cc",
+            "max_power": "215.5 hp @ 13,000 rpm",
+            "weight": "198.5 kg"
+        }
+    },
+    {
+        "id": 7,
+        "name": "Honda Wave Alpha",
+        "slug": "honda-wave-alpha",
+        "brand_id": 1,
+        "brand": "Honda",
+        "category_id": 2,
+        "category": "Xe Số",
+        "price": 18000000,
+        "sale_price": 17500000,
+        "image": "https://images.unsplash.com/photo-1558980394-0a37c6ce74fa?q=80&w=2000&auto=format&fit=crop",
+        "is_hot": true,
+        "is_new": false,
+        "specs": {
+            "engine_type": "4 kỳ, SOHC",
+            "displacement": "109.1 cc",
+            "max_power": "6.12kW / 7.500 vòng/phút",
+            "weight": "97 kg"
+        }
+    },
+    {
+        "id": 8,
+        "name": "Yamaha Grande Blue Core",
+        "slug": "yamaha-grande",
+        "brand_id": 2,
+        "brand": "Yamaha",
+        "category_id": 1,
+        "category": "Xe Tay Ga",
+        "price": 46000000,
+        "sale_price": null,
+        "image": "https://images.unsplash.com/photo-1591637333184-19aa84b3e01f?q=80&w=2000&auto=format&fit=crop",
+        "is_hot": false,
+        "is_new": true,
+        "specs": {
+            "engine_type": "Blue Core Hybrid, SOHC",
+            "displacement": "125 cc",
+            "max_power": "6.1 kW/6,500 vòng/phút",
+            "weight": "101 kg"
+        }
+    }
+]

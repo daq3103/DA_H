@@ -1,0 +1,457 @@
+/* 
+ * CSS Custom cho MotoShop
+ * Dựa trên Bootstrap 5 Variables override và Custom Components
+ */
+
+:root {
+    --moto-primary: #e60000;      /* Đỏ chủ đạo cho shop xe (Honda/Ducati vibe) */
+    --moto-primary-hover: #b30000;
+    --moto-dark: #1a1a1a;
+    --moto-gray: #f8f9fa;
+    --font-inter: 'Inter', sans-serif;
+}
+
+body {
+    font-family: var(--font-inter);
+    color: #333;
+    background-color: var(--moto-gray);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Utilities */
+.text-primary-moto {
+    color: var(--moto-primary) !important;
+}
+
+.bg-primary-moto {
+    background-color: var(--moto-primary) !important;
+}
+
+.btn-moto-primary {
+    background-color: var(--moto-primary);
+    color: white;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.btn-moto-primary:hover {
+    background-color: var(--moto-primary-hover);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(230, 0, 0, 0.3);
+}
+
+.tracking-wide {
+    letter-spacing: 0.1em;
+}
+
+/* Top Bar */
+.top-bar {
+    background-color: var(--moto-dark);
+}
+
+/* Navbar */
+.navbar {
+    transition: all 0.3s ease;
+}
+
+.navbar .nav-link {
+    color: #333;
+    transition: color 0.3s;
+}
+
+.navbar .nav-link:hover, .navbar .nav-link.active {
+    color: var(--moto-primary) !important;
+}
+
+.head-icon-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #f1f3f5;
+    transition: all 0.3s;
+    text-decoration: none;
+}
+
+.head-icon-btn:hover {
+    background-color: var(--moto-primary);
+    color: white !important;
+}
+
+/* Hero Carousel */
+.hero-slide {
+    height: 65vh;
+    min-height: 500px;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+}
+
+.carousel-control-prev, .carousel-control-next {
+    width: 5%;
+}
+
+.carousel-nav-icon {
+    width: 50px;
+    height: 50px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+    transition: all 0.3s;
+    font-size: 1.2rem;
+}
+
+.carousel-nav-icon:hover {
+    background: var(--moto-primary);
+    transform: scale(1.1);
+}
+
+.slide-content-animate {
+    animation: fadeInUp 1s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Product Cards */
+.product-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0,0,0,0.05);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+}
+
+.product-img-wrapper {
+    position: relative;
+    padding-top: 75%; /* 4:3 Aspect Ratio */
+    overflow: hidden;
+    background: #f8f9fa;
+}
+
+.product-img-wrapper img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.product-card:hover .product-img-wrapper img {
+    transform: scale(1.05);
+}
+
+.product-badges {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    z-index: 2;
+}
+
+.product-actions {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    transform: translateX(50px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 2;
+}
+
+.product-card:hover .product-actions {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.action-btn {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background: white;
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: all 0.2s;
+}
+
+.action-btn:hover {
+    background: var(--moto-primary);
+    color: white;
+}
+
+/* Footer Hover */
+.hover-white:hover {
+    color: white !important;
+    opacity: 1 !important;
+    padding-left: 5px;
+    transition: all 0.3s ease;
+}
+
+.social-icon:hover {
+    background-color: var(--moto-primary) !important;
+}
+
+/* Form inputs focus */
+.form-control:focus, .form-select:focus {
+    border-color: var(--moto-primary);
+    box-shadow: 0 0 0 0.25rem rgba(230, 0, 0, 0.25);
+}
+
+/* Utilities for single product page */
+.gallery-thumbnail {
+    cursor: pointer;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.2s;
+}
+
+.gallery-thumbnail.active {
+    border-color: var(--moto-primary);
+}
+
+.specs-table th {
+    background-color: #f8f9fa;
+    width: 40%;
+}
+
+/* ============== AUTH PAGES (Login / Register) ============== */
+.auth-body {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-page {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+}
+
+.auth-card {
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.auth-logo {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.auth-logo a {
+    color: var(--moto-primary);
+}
+
+.auth-logo i {
+    font-size: 2.5rem;
+    color: var(--moto-primary);
+    margin-bottom: 10px;
+}
+
+.auth-logo h2 {
+    color: var(--moto-dark);
+    font-weight: 800;
+    margin-bottom: 5px;
+}
+
+.auth-logo p {
+    color: #888;
+    font-size: 0.9rem;
+    margin-bottom: 0;
+}
+
+.auth-error {
+    display: none;
+    background: #fff5f5;
+    border: 1px solid #fed7d7;
+    color: #c53030;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    margin-bottom: 20px;
+    animation: fadeInUp 0.3s ease;
+}
+
+.auth-success {
+    display: none;
+    background: #f0fff4;
+    border: 1px solid #c6f6d5;
+    color: #276749;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    margin-bottom: 20px;
+    animation: fadeInUp 0.3s ease;
+}
+
+.btn-auth-submit {
+    width: 100%;
+    padding: 14px;
+    background: var(--moto-primary);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 5px;
+}
+
+.btn-auth-submit:hover {
+    background: var(--moto-primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(230, 0, 0, 0.3);
+}
+
+.btn-auth-submit:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.auth-divider {
+    text-align: center;
+    margin: 24px 0;
+    position: relative;
+}
+
+.auth-divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #e2e8f0;
+}
+
+.auth-divider span {
+    background: white;
+    padding: 0 16px;
+    color: #a0aec0;
+    font-size: 0.85rem;
+    position: relative;
+}
+
+/* ============== USER DROPDOWN (Navbar) ============== */
+.user-dropdown-toggle {
+    cursor: pointer;
+}
+
+.user-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+    border: 1px solid rgba(0,0,0,0.06);
+    min-width: 220px;
+    padding: 8px 0;
+    z-index: 1050;
+    display: none;
+    animation: fadeInUp 0.2s ease;
+}
+
+.user-dropdown-menu.show {
+    display: block;
+}
+
+.user-dropdown-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f1f3f5;
+}
+
+.user-dropdown-header .user-name {
+    font-weight: 700;
+    color: #1a1a1a;
+    font-size: 0.9rem;
+}
+
+.user-dropdown-header .user-phone {
+    color: #888;
+    font-size: 0.8rem;
+}
+
+.user-dropdown-menu a,
+.user-dropdown-menu button {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    color: #333;
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+    border: none;
+    background: none;
+    width: 100%;
+    cursor: pointer;
+}
+
+.user-dropdown-menu a:hover,
+.user-dropdown-menu button:hover {
+    background: #f8f9fa;
+    color: var(--moto-primary);
+}
+
+.user-dropdown-menu a i,
+.user-dropdown-menu button i {
+    width: 20px;
+    margin-right: 10px;
+    text-align: center;
+}
+
+.user-dropdown-menu .divider {
+    height: 1px;
+    background: #f1f3f5;
+    margin: 4px 0;
+}
+
+.user-dropdown-menu .logout-btn {
+    color: var(--moto-primary);
+}
+
+.user-logged-in-icon {
+    background-color: var(--moto-primary) !important;
+    color: white !important;
+    font-size: 0.75rem !important;
+    font-weight: 700;
+}

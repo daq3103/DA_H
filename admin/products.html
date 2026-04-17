@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Sản Phẩm - MotoShop Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body class="admin-body">
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar -->
+    <aside class="admin-sidebar" id="adminSidebar">
+        <a href="index.html" class="sidebar-brand">
+            <i class="fas fa-motorcycle"></i>
+            <div><span>MotoShop</span><small>Admin Panel</small></div>
+        </a>
+        <ul class="sidebar-nav">
+            <li class="nav-label">Tổng quan</li>
+            <li><a href="index.html"><i class="fas fa-th-large"></i> Dashboard</a></li>
+            <li class="nav-label">Quản lý</li>
+            <li><a href="products.html" class="active"><i class="fas fa-motorcycle"></i> Sản phẩm</a></li>
+            <li><a href="orders.html"><i class="fas fa-shopping-bag"></i> Đơn hàng</a></li>
+            <li><a href="customers.html"><i class="fas fa-users"></i> Khách hàng</a></li>
+            <li class="nav-label">Nội dung</li>
+            <li><a href="news.html"><i class="fas fa-newspaper"></i> Tin tức</a></li>
+            <li><a href="contacts.html"><i class="fas fa-envelope"></i> Liên hệ</a></li>
+            <li class="nav-label">Hệ thống</li>
+            <li><a href="../index.html" target="_blank"><i class="fas fa-external-link-alt"></i> Xem Website</a></li>
+            <li><a href="#" onclick="adminLogout()" class="text-danger"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a></li>
+        </ul>
+    </aside>
+
+    <!-- Main -->
+    <div class="admin-main">
+        <div class="admin-topbar">
+            <div class="topbar-left">
+                <button class="btn-sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                <div>
+                    <h5>Quản Lý Sản Phẩm</h5>
+                    <span class="breadcrumb-text">Dashboard / Sản phẩm</span>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <div class="d-none d-md-block text-end">
+                    <div class="admin-name" id="topbar-admin-name">Admin</div>
+                    <div class="admin-role">Quản trị viên</div>
+                </div>
+                <div class="admin-avatar" id="topbar-avatar">A</div>
+                <button class="btn-logout" onclick="adminLogout()"><i class="fas fa-sign-out-alt me-1"></i> Thoát</button>
+            </div>
+        </div>
+
+        <div class="admin-content">
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <h6 class="mb-0"><i class="fas fa-motorcycle me-2 text-danger"></i>Danh Sách Sản Phẩm</h6>
+                        <div class="admin-search">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="searchProduct" placeholder="Tìm kiếm xe..." oninput="filterProducts()">
+                        </div>
+                    </div>
+                    <button class="btn-admin-primary" data-bs-toggle="modal" data-bs-target="#productModal" onclick="openAddProduct()">
+                        <i class="fas fa-plus"></i> Thêm Sản Phẩm
+                    </button>
+                </div>
+                <div class="admin-card-body" style="overflow-x: auto;">
+                    <table class="admin-table" id="products-table">
+                        <thead>
+                            <tr>
+                                <th>Ảnh</th>
+                                <th>Tên xe</th>
+                                <th>Hãng</th>
+                                <th>Loại</th>
+                                <th>Giá</th>
+                                <th>Giá KM</th>
+                                <th>Trạng thái</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="products-tbody">
+                            <tr><td colspan="8" class="text-center text-muted py-4">Đang tải...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Modal -->
+    <div class="modal fade" id="productModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="productModalTitle">Thêm Sản Phẩm</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="productForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="prod_id">
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label class="form-label">Tên xe <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="prod_name" required placeholder="VD: Honda Winner X 2024">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Slug</label>
+                                <input type="text" class="form-control" id="prod_slug" placeholder="Tự tạo từ tên xe">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Hãng xe <span class="text-danger">*</span></label>
+                                <select class="form-select" id="prod_brand" required>
+                                    <option value="">-- Chọn hãng --</option>
+                                    <option value="1">Honda</option>
+                                    <option value="2">Yamaha</option>
+                                    <option value="3">Ducati</option>
+                                    <option value="4">Suzuki</option>
+                                    <option value="5">Kawasaki</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Loại xe <span class="text-danger">*</span></label>
+                                <select class="form-select" id="prod_category" required>
+                                    <option value="">-- Chọn loại --</option>
+                                    <option value="1">Xe Tay Ga</option>
+                                    <option value="2">Xe Số</option>
+                                    <option value="3">Xe Côn Tay</option>
+                                    <option value="4">Phân Khối Lớn</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Trạng thái</label>
+                                <select class="form-select" id="prod_status">
+                                    <option value="active">Đang bán</option>
+                                    <option value="inactive">Ngừng bán</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Giá (VNĐ) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="prod_price" required placeholder="50000000">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Giá khuyến mãi</label>
+                                <input type="number" class="form-control" id="prod_sale_price" placeholder="Để trống nếu không KM">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Số lượng tồn</label>
+                                <input type="number" class="form-control" id="prod_stock" value="0">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Ảnh sản phẩm</label>
+                                <div class="d-flex gap-3 align-items-start">
+                                    <div class="flex-grow-1">
+                                        <div class="input-group mb-2">
+                                            <label class="btn btn-outline-primary" for="prod_image_file" style="white-space:nowrap; border-radius: 8px 0 0 8px;">
+                                                <i class="fas fa-upload me-1"></i> Chọn ảnh
+                                            </label>
+                                            <input type="file" class="d-none" id="prod_image_file" accept="image/jpeg,image/png,image/gif,image/webp">
+                                            <input type="text" class="form-control" id="prod_image" placeholder="Hoặc dán URL ảnh vào đây...">
+                                        </div>
+                                        <div id="upload-status" class="small text-muted"></div>
+                                    </div>
+                                    <div id="image-preview" style="width:80px;height:60px;border-radius:8px;overflow:hidden;border:2px dashed #dee2e6;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#f8f9fa;">
+                                        <i class="fas fa-image text-muted"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Mô tả</label>
+                                <textarea class="form-control" id="prod_desc" rows="3" placeholder="Mô tả chi tiết sản phẩm..."></textarea>
+                            </div>
+                            <div class="col-12">
+                                <hr>
+                                <h6 class="fw-bold mb-3"><i class="fas fa-cogs me-2"></i>Thông số kỹ thuật</h6>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Loại động cơ</label>
+                                <input type="text" class="form-control" id="spec_engine" placeholder="VD: DOHC, 4 kỳ">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Dung tích xy-lanh</label>
+                                <input type="text" class="form-control" id="spec_displacement" placeholder="VD: 149.1 cc">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Công suất tối đa</label>
+                                <input type="text" class="form-control" id="spec_power" placeholder="VD: 11.5kW">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Trọng lượng</label>
+                                <input type="text" class="form-control" id="spec_weight" placeholder="VD: 122 kg">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Mức tiêu thụ nhiên liệu</label>
+                                <input type="text" class="form-control" id="spec_fuel" placeholder="VD: 1.69L/100km">
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="prod_is_new">
+                                    <label class="form-check-label" for="prod_is_new">Sản phẩm mới</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="prod_is_hot">
+                                    <label class="form-check-label" for="prod_is_hot">Sản phẩm Hot / Bán chạy</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-admin-outline" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn-admin-primary" id="btn-save-product">
+                            <i class="fas fa-save"></i> Lưu Sản Phẩm
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/admin.js"></script>
+</body>
+</html>

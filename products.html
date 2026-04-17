@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sản Phẩm - MotoShop</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-light">
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm py-3">
+        <div class="container">
+            <a class="navbar-brand fw-bold fs-3 text-primary-moto d-flex align-items-center" href="index.html">
+                <i class="fas fa-motorcycle me-2"></i> MotoShop
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav mx-auto mb-2 mb-lg-0 fw-medium">
+                    <li class="nav-item"><a class="nav-link px-3" href="index.html">Trang chủ</a></li>
+                    <li class="nav-item"><a class="nav-link active px-3" href="products.html">Sản phẩm</a></li>
+                    <li class="nav-item"><a class="nav-link px-3" href="news.html">Tin tức</a></li>
+                    <li class="nav-item"><a class="nav-link px-3" href="contact.html">Liên hệ</a></li>
+                </ul>
+
+                <div class="d-flex align-items-center gap-3 mt-3 mt-lg-0">
+                    <a href="cart.html" class="position-relative text-dark fs-5 head-icon-btn d-flex align-items-center justify-content-center">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem;">
+                            0
+                        </span>
+                    </a>
+                    <div id="user-auth-area" class="position-relative"></div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="bg-dark text-white py-5" style="background-image: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('https://images.unsplash.com/photo-1558981806-ec527fa84c39?q=80&w=2070'); background-size: cover; background-position: center;">
+        <div class="container text-center py-4">
+            <h1 class="display-4 fw-bold mb-3">Tất Cả Sản Phẩm</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb justify-content-center mb-0">
+                    <li class="breadcrumb-item"><a href="index.html" class="text-white text-decoration-none opacity-75">Trang chủ</a></li>
+                    <li class="breadcrumb-item active text-white" aria-current="page">Sản phẩm</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container py-5">
+        <div class="row">
+            <!-- Sidebar Filter -->
+            <div class="col-lg-3 mb-4 mb-lg-0">
+                <button class="btn btn-outline-dark w-100 d-lg-none mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#filterSidebar">
+                    <i class="fas fa-filter me-2"></i> Hiện bộ lọc
+                </button>
+
+                <div class="collapse d-lg-block" id="filterSidebar">
+                    <div class="bg-white p-4 rounded-3 shadow-sm border border-light">
+                        <h5 class="fw-bold mb-4 border-bottom pb-2">Bộ Lọc Sắp Xếp</h5>
+                        
+                        <!-- Lọc theo Hãng -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold mb-3">Hãng Sản Xuất</h6>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input filter-brand" type="checkbox" value="Honda" id="brand1">
+                                <label class="form-check-label text-muted" for="brand1">Honda</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input filter-brand" type="checkbox" value="Yamaha" id="brand2">
+                                <label class="form-check-label text-muted" for="brand2">Yamaha</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input filter-brand" type="checkbox" value="Ducati" id="brand3">
+                                <label class="form-check-label text-muted" for="brand3">Ducati</label>
+                            </div>
+                        </div>
+
+                        <!-- Lọc theo Loại Xe -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold mb-3">Dòng Xe</h6>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input filter-category" type="checkbox" value="Xe Tay Ga" id="cat1">
+                                <label class="form-check-label text-muted" for="cat1">Xe Tay Ga</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input filter-category" type="checkbox" value="Xe Số" id="cat2">
+                                <label class="form-check-label text-muted" for="cat2">Xe Số</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input filter-category" type="checkbox" value="Xe Côn Tay" id="cat3">
+                                <label class="form-check-label text-muted" for="cat3">Xe Côn Tay</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input filter-category" type="checkbox" value="Phân Khối Lớn" id="cat4">
+                                <label class="form-check-label text-muted" for="cat4">Phân Khối Lớn</label>
+                            </div>
+                        </div>
+
+                        <!-- Lọc theo Giá -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold mb-3">Mức Giá</h6>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input filter-price" type="radio" name="priceFilter" value="all" id="price0" checked>
+                                <label class="form-check-label text-muted" for="price0">Tất cả</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input filter-price" type="radio" name="priceFilter" value="0-30" id="price1">
+                                <label class="form-check-label text-muted" for="price1">Dưới 30 triệu</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input filter-price" type="radio" name="priceFilter" value="30-50" id="price2">
+                                <label class="form-check-label text-muted" for="price2">30 - 50 triệu</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input filter-price" type="radio" name="priceFilter" value="50-100" id="price3">
+                                <label class="form-check-label text-muted" for="price3">50 - 100 triệu</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input filter-price" type="radio" name="priceFilter" value="100-up" id="price4">
+                                <label class="form-check-label text-muted" for="price4">Trên 100 triệu</label>
+                            </div>
+                        </div>
+
+                        <button id="reset-filters" class="btn btn-outline-danger w-100 mt-2">Xóa bộ lọc</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products Grid -->
+            <div class="col-lg-9">
+                <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded-3 shadow-sm border border-light">
+                    <p class="mb-0 text-muted">Hiển thị <span id="product-count" class="fw-bold text-dark">0</span> kết quả</p>
+                    <select class="form-select w-auto border-0 bg-light" id="sort-select">
+                        <option value="default">Sắp xếp mặc định</option>
+                        <option value="price-asc">Giá: Thấp đến Cao</option>
+                        <option value="price-desc">Giá: Cao xuống Thấp</option>
+                        <option value="name-asc">Tên: A-Z</option>
+                    </select>
+                </div>
+
+                <div class="row g-4" id="products-grid">
+                    <!-- Products rendered via JS -->
+                    <div class="col-12 text-center py-5">
+                        <div class="spinner-border text-primary-moto" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Pagination -->
+                <nav aria-label="Page navigation" class="mt-5">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item disabled"><a class="page-link border-0 text-muted" href="#">Trang trước</a></li>
+                        <li class="page-item active"><a class="page-link border-0 bg-primary-moto text-white" href="#">1</a></li>
+                        <li class="page-item"><a class="page-link border-0 text-dark" href="#">2</a></li>
+                        <li class="page-item"><a class="page-link border-0 text-dark" href="#">Trang sau</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white pt-5 pb-3">
+        <!-- Đã rút gọn để code ngắn lại -->
+        <div class="container text-center pt-3 border-top border-secondary">
+            <p class="mb-0 opacity-50 small">&copy; 2024 MotoShop. Kịch bản của HUMG_DA.</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Main JS -->
+    <script src="js/main.js"></script>
+</body>
+</html>

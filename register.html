@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Ký Tài Khoản - MotoShop</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="auth-body">
+
+    <div class="auth-page">
+        <div class="auth-card">
+            <div class="auth-logo">
+                <a href="index.html" class="text-decoration-none">
+                    <i class="fas fa-motorcycle"></i>
+                    <h2>MotoShop</h2>
+                </a>
+                <p>Tạo tài khoản mới</p>
+            </div>
+
+            <div class="auth-error" id="auth-error">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <span id="auth-error-msg"></span>
+            </div>
+
+            <form id="registerForm">
+                <div class="form-floating mb-3">
+                    <input type="text" class="form-control" id="full_name" placeholder="Họ và Tên" required>
+                    <label for="full_name"><i class="fas fa-user me-2"></i>Họ và Tên *</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input type="tel" class="form-control" id="phone" placeholder="Số điện thoại" required pattern="[0-9]{10,11}">
+                    <label for="phone"><i class="fas fa-phone me-2"></i>Số điện thoại *</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input type="email" class="form-control" id="email" placeholder="Email (không bắt buộc)">
+                    <label for="email"><i class="fas fa-envelope me-2"></i>Email (không bắt buộc)</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input type="text" class="form-control" id="address" placeholder="Địa chỉ">
+                    <label for="address"><i class="fas fa-map-marker-alt me-2"></i>Địa chỉ</label>
+                </div>
+                <div class="form-floating mb-3 position-relative">
+                    <input type="password" class="form-control" id="password" placeholder="Mật khẩu" required minlength="6" autocomplete="new-password">
+                    <label for="password"><i class="fas fa-lock me-2"></i>Mật khẩu * (tối thiểu 6 ký tự)</label>
+                    <button type="button" class="btn position-absolute top-50 end-0 translate-middle-y text-muted border-0 pe-3" onclick="togglePassword('password', this)" tabindex="-1">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <div class="form-floating mb-3 position-relative">
+                    <input type="password" class="form-control" id="confirm_password" placeholder="Xác nhận mật khẩu" required autocomplete="new-password">
+                    <label for="confirm_password"><i class="fas fa-lock me-2"></i>Xác nhận mật khẩu *</label>
+                    <button type="button" class="btn position-absolute top-50 end-0 translate-middle-y text-muted border-0 pe-3" onclick="togglePassword('confirm_password', this)" tabindex="-1">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+
+                <button type="submit" class="btn-auth-submit" id="btn-register">
+                    <i class="fas fa-user-plus me-2"></i>Đăng Ký
+                </button>
+            </form>
+
+            <div class="auth-divider">
+                <span>hoặc</span>
+            </div>
+
+            <div class="text-center">
+                <p class="mb-0 text-muted">Đã có tài khoản?
+                    <a href="login.html" class="text-primary-moto fw-bold text-decoration-none">Đăng nhập</a>
+                </p>
+            </div>
+
+            <div class="text-center mt-4">
+                <a href="index.html" class="text-muted text-decoration-none" style="font-size: 0.85rem;">
+                    <i class="fas fa-arrow-left me-1"></i> Quay lại trang chủ
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tự động chuyển sang localhost nếu mở bằng file://
+        if (window.location.protocol === 'file:') {
+            const m = window.location.pathname.match(/\/shop\/(.*)/i);
+            if (m) { window.location.href = 'http://localhost/shop/' + (m[1] || 'register.html'); }
+        }
+
+        // Nếu đã đăng nhập → về trang chủ
+        if (localStorage.getItem('motoshop_user')) {
+            window.location.href = 'index.html';
+        }
+
+        function togglePassword(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-register');
+            const errBox = document.getElementById('auth-error');
+            const errMsg = document.getElementById('auth-error-msg');
+
+            const full_name = document.getElementById('full_name').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const address = document.getElementById('address').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+
+            errBox.style.display = 'none';
+
+            // Validate phía client
+            if (password !== confirmPassword) {
+                errMsg.textContent = 'Mật khẩu xác nhận không khớp';
+                errBox.style.display = 'block';
+                return;
+            }
+
+            if (!/^[0-9]{10,11}$/.test(phone)) {
+                errMsg.textContent = 'Số điện thoại không hợp lệ (10-11 số)';
+                errBox.style.display = 'block';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang xử lý...';
+
+            try {
+                const res = await fetch('api/user_auth.php?action=register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ full_name, phone, email, address, password })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    // Chuyển sang trang đăng nhập với thông báo thành công
+                    window.location.href = 'login.html?registered=1';
+                } else {
+                    errMsg.textContent = data.message || 'Đăng ký thất bại';
+                    errBox.style.display = 'block';
+                }
+            } catch (err) {
+                errMsg.textContent = 'Không thể kết nối tới server. Hãy chắc chắn XAMPP đang chạy!';
+                errBox.style.display = 'block';
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-user-plus me-2"></i>Đăng Ký';
+        });
+    </script>
+</body>
+</html>
