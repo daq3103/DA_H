@@ -68,16 +68,58 @@
                     
                     <form id="leadForm">
                         <div class="mb-3">
-                            <input type="text" class="form-control" placeholder="Họ và Tên *" required>
+                            <input type="text" id="lead-name" class="form-control" placeholder="Họ và Tên *" required>
                         </div>
                         <div class="mb-3">
-                            <input type="tel" class="form-control" placeholder="Số điện thoại *" required>
+                            <input type="tel" id="lead-phone" class="form-control" placeholder="Số điện thoại *" required>
                         </div>
                         <div class="mb-3">
-                            <textarea class="form-control" rows="3" placeholder="Lời nhắn (Ví dụ: Tôi muốn hỏi giá lăn bánh biển Hà Nội)"></textarea>
+                            <textarea id="lead-message" class="form-control" rows="3" placeholder="Lời nhắn (Ví dụ: Tôi muốn hỏi giá lăn bánh biển Hà Nội)"></textarea>
                         </div>
-                        <button type="submit" class="btn btn-dark w-100 fw-medium">Gửi Yêu Cầu</button>
+                        <button type="submit" id="lead-submit-btn" class="btn btn-dark w-100 fw-medium">Gửi Yêu Cầu</button>
                     </form>
+                    <script>
+                        document.getElementById('leadForm').addEventListener('submit', async function(e) {
+                            e.preventDefault();
+                            const btn = document.getElementById('lead-submit-btn');
+                            btn.disabled = true;
+                            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang gửi...';
+
+                            // Lấy tên sản phẩm đang xem để ghi kèm
+                            const productName = document.querySelector('#product-main-view h2')?.textContent || '';
+                            const userMessage = document.getElementById('lead-message').value.trim();
+                            const fullMessage = productName 
+                                ? `[Yêu cầu tư vấn - ${productName}] ${userMessage}` 
+                                : userMessage || 'Yêu cầu tư vấn báo giá';
+
+                            const payload = {
+                                full_name: document.getElementById('lead-name').value.trim(),
+                                phone: document.getElementById('lead-phone').value.trim(),
+                                email: null,
+                                message: fullMessage
+                            };
+
+                            try {
+                                const res = await fetch('api/admin_contacts.php', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(payload)
+                                });
+                                const data = await res.json();
+                                if (data.error) {
+                                    showToast(data.message || 'Có lỗi xảy ra!', 'danger');
+                                } else {
+                                    showToast('Gửi yêu cầu thành công! Nhân viên sẽ liên hệ bạn sớm nhất.', 'success', 4000);
+                                    e.target.reset();
+                                }
+                            } catch (err) {
+                                showToast('Không thể kết nối máy chủ. Vui lòng thử lại!', 'danger');
+                            } finally {
+                                btn.disabled = false;
+                                btn.innerHTML = 'Gửi Yêu Cầu';
+                            }
+                        });
+                    </script>
                 </div>
             </div>
         </div>
@@ -85,6 +127,8 @@
 
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/shared/moto-shared.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/main-bootstrap.js"></script>
 </body>
 </html>

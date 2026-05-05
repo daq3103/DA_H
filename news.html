@@ -48,69 +48,90 @@
 
     <!-- Main Content -->
     <div class="container py-5 my-3">
-        <div class="row g-4">
-            <!-- News Card 1 -->
-            <div class="col-lg-4 col-md-6">
-                <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1591637333184-19aa84b3e01f?q=80&w=600&auto=format&fit=crop" class="card-img-top object-fit-cover" alt="News Image" style="height: 220px;">
-                    <div class="card-body p-4 d-flex flex-column">
-                        <span class="badge bg-light text-primary-moto mb-3 w-auto align-self-start py-2 px-3 fw-bold border">Kinh Nghiệm</span>
-                        <h5 class="card-title fw-bold mb-3 line-clamp-2"><a href="#" class="text-dark text-decoration-none hover-primary">Bảo dưỡng xe tay ga định kỳ: Những mốc thời gian không thể bỏ qua</a></h5>
-                        <p class="card-text text-muted small flex-grow-1">Thay nhớt máy, nhớt láp, kiểm tra lốp và phanh là những hạng mục cần thiết để giữ xe ở trạng thái tốt nhất...</p>
-                        <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
-                            <span class="small text-muted"><i class="far fa-clock me-1"></i> 12/03/2024</span>
-                            <a href="#" class="btn btn-sm btn-outline-dark rounded-pill fw-medium">Đọc tiếp</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- News Card 2 -->
-            <div class="col-lg-4 col-md-6">
-                <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1568772585407-9361f9bf3c87?q=80&w=600&auto=format&fit=crop" class="card-img-top object-fit-cover" alt="News Image" style="height: 220px;">
-                    <div class="card-body p-4 d-flex flex-column">
-                        <span class="badge bg-light text-primary-moto mb-3 w-auto align-self-start py-2 px-3 fw-bold border">Thị Trường</span>
-                        <h5 class="card-title fw-bold mb-3 line-clamp-2"><a href="#" class="text-dark text-decoration-none hover-primary">Top 5 mẫu xe côn tay lý tưởng nhất tầm giá dưới 50 triệu năm nay</a></h5>
-                        <p class="card-text text-muted small flex-grow-1">Winner X hay Exciter? Đâu là lựa chọn được anh em đánh giá cao về hiệu năng lẫn thiết kế thể thao?</p>
-                        <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
-                            <span class="small text-muted"><i class="far fa-clock me-1"></i> 10/03/2024</span>
-                            <a href="#" class="btn btn-sm btn-outline-dark rounded-pill fw-medium">Đọc tiếp</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- News Card 3 -->
-            <div class="col-lg-4 col-md-6">
-                <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1558981403-c5f9899a28bc?q=80&w=600&auto=format&fit=crop" class="card-img-top object-fit-cover" alt="News Image" style="height: 220px;">
-                    <div class="card-body p-4 d-flex flex-column">
-                        <span class="badge bg-light text-primary-moto mb-3 w-auto align-self-start py-2 px-3 fw-bold border">Sự Kiện</span>
-                        <h5 class="card-title fw-bold mb-3 line-clamp-2"><a href="#" class="text-dark text-decoration-none hover-primary">Honda ra mắt SH 160i mới: Thiết kế đột phá, nâng cấp công nghệ eSP+</a></h5>
-                        <p class="card-text text-muted small flex-grow-1">Không chỉ sở hữu diện mạo đẳng cấp châu Âu, phiên bản mới nhất mang đến hiệu suất vượt trội cùng tiện ích thông minh.</p>
-                        <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
-                            <span class="small text-muted"><i class="far fa-clock me-1"></i> 05/03/2024</span>
-                            <a href="#" class="btn btn-sm btn-outline-dark rounded-pill fw-medium">Đọc tiếp</a>
-                        </div>
-                    </div>
+        <div class="row g-4" id="news-grid">
+            <!-- Loading -->
+            <div class="col-12 text-center py-5">
+                <div class="spinner-border text-primary-moto" role="status">
+                    <span class="visually-hidden">Loading...</span>
                 </div>
             </div>
         </div>
-
-        <!-- Pagination -->
-        <nav aria-label="Page navigation" class="mt-5">
-            <ul class="pagination justify-content-center">
-                <li class="page-item disabled"><a class="page-link border-0 text-muted" href="#">Trang trước</a></li>
-                <li class="page-item active"><a class="page-link border-0 bg-primary-moto text-white" href="#">1</a></li>
-                <li class="page-item"><a class="page-link border-0 text-dark" href="#">2</a></li>
-                <li class="page-item"><a class="page-link border-0 text-dark" href="#">Trang sau</a></li>
-            </ul>
-        </nav>
     </div>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/shared/moto-shared.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/main-bootstrap.js"></script>
+    <script>
+        // Dữ liệu tĩnh fallback khi không kết nối được DB
+        const STATIC_NEWS = [
+            {
+                title: 'Bảo dưỡng xe tay ga định kỳ: Những mốc thời gian không thể bỏ qua',
+                thumbnail_url: 'https://images.unsplash.com/photo-1591637333184-19aa84b3e01f?q=80&w=600&auto=format&fit=crop',
+                summary: 'Thay nhớt máy, nhớt láp, kiểm tra lốp và phanh là những hạng mục cần thiết để giữ xe ở trạng thái tốt nhất...',
+                category: 'Kinh Nghiệm',
+                published_at: '2024-03-12'
+            },
+            {
+                title: 'Top 5 mẫu xe côn tay lý tưởng nhất tầm giá dưới 50 triệu năm nay',
+                thumbnail_url: 'https://images.unsplash.com/photo-1568772585407-9361f9bf3c87?q=80&w=600&auto=format&fit=crop',
+                summary: 'Winner X hay Exciter? Đâu là lựa chọn được anh em đánh giá cao về hiệu năng lẫn thiết kế thể thao?',
+                category: 'Thị Trường',
+                published_at: '2024-03-10'
+            },
+            {
+                title: 'Honda ra mắt SH 160i mới: Thiết kế đột phá, nâng cấp công nghệ eSP+',
+                thumbnail_url: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?q=80&w=600&auto=format&fit=crop',
+                summary: 'Không chỉ sở hữu diện mạo đẳng cấp châu Âu, phiên bản mới nhất mang đến hiệu suất vượt trội cùng tiện ích thông minh.',
+                category: 'Sự Kiện',
+                published_at: '2024-03-05'
+            }
+        ];
+
+        function renderNewsCards(newsList) {
+            const grid = document.getElementById('news-grid');
+            if (!newsList || newsList.length === 0) {
+                grid.innerHTML = `<div class="col-12 text-center py-5"><h5 class="text-muted">Chưa có bài viết nào.</h5></div>`;
+                return;
+            }
+            grid.innerHTML = newsList.map(n => {
+                const date = n.published_at ? new Date(n.published_at).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
+                const imgUrl = n.thumbnail_url || 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?q=80&w=600';
+                const category = n.category || 'Tin tức';
+                return `
+                <div class="col-lg-4 col-md-6">
+                    <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
+                        <img src="${imgUrl}" class="card-img-top object-fit-cover" alt="${n.title}" style="height: 220px;">
+                        <div class="card-body p-4 d-flex flex-column">
+                            <span class="badge bg-light text-primary-moto mb-3 w-auto align-self-start py-2 px-3 fw-bold border">${category}</span>
+                            <h5 class="card-title fw-bold mb-3 line-clamp-2">
+                                <span class="text-dark">${n.title}</span>
+                            </h5>
+                            <p class="card-text text-muted small flex-grow-1">${n.summary || ''}</p>
+                            <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                                <span class="small text-muted"><i class="far fa-clock me-1"></i> ${date}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        // Load tin tức từ API, fallback về dữ liệu tĩnh
+        (async function() {
+            try {
+                const res = await fetch('api/admin_news.php');
+                const data = await res.json();
+                if (data.error || !Array.isArray(data) || data.length === 0) {
+                    renderNewsCards(STATIC_NEWS);
+                } else {
+                    renderNewsCards(data);
+                }
+            } catch (err) {
+                renderNewsCards(STATIC_NEWS);
+            }
+        })();
+    </script>
 </body>
 </html>

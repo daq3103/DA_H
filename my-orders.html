@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đơn Hàng Của Tôi - MotoShop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-light">
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm py-3">
+        <div class="container">
+            <a class="navbar-brand fw-bold fs-3 text-primary-moto d-flex align-items-center" href="index.html">
+                <i class="fas fa-motorcycle me-2"></i> MotoShop
+            </a>
+            <div class="d-flex align-items-center gap-3">
+                <a href="cart.html" class="position-relative text-dark fs-5 head-icon-btn d-flex align-items-center justify-content-center">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem;">0</span>
+                </a>
+                <div id="user-auth-area" class="position-relative"></div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Content -->
+    <div class="container profile-page">
+        <div class="row g-4">
+            <!-- Sidebar -->
+            <div class="col-lg-3">
+                <div class="profile-sidebar mb-3">
+                    <div class="profile-avatar" id="profile-avatar">U</div>
+                    <h5 class="fw-bold mb-1" id="profile-name">--</h5>
+                    <p class="text-muted small mb-0" id="profile-role">Khách hàng</p>
+                </div>
+                <div class="profile-menu">
+                    <a href="profile.html"><i class="fas fa-user"></i> Thông tin cá nhân</a>
+                    <a href="my-orders.html" class="active"><i class="fas fa-box"></i> Đơn hàng của tôi</a>
+                    <a href="index.html"><i class="fas fa-home"></i> Về trang chủ</a>
+                    <a href="#" onclick="logoutUser()" class="text-danger"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+                </div>
+            </div>
+
+            <!-- Orders -->
+            <div class="col-lg-9">
+                <div class="profile-card">
+                    <h5><i class="fas fa-box me-2 text-primary-moto"></i>Đơn Hàng Của Tôi</h5>
+                    <div id="orders-container">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary-moto" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/shared/moto-shared.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/main-bootstrap.js"></script>
+    <script>
+        const userData = localStorage.getItem('motoshop_user');
+        if (!userData) { window.location.href = 'login.html'; }
+
+        const user = JSON.parse(userData);
+        document.getElementById('profile-avatar').textContent = user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U';
+        document.getElementById('profile-name').textContent = user.full_name;
+        document.getElementById('profile-role').textContent = user.role === 'admin' ? 'Quản trị viên' : 'Khách hàng';
+
+        const statusMap = {
+            'pending': { text: 'Chờ xử lý', class: 'status-pending' },
+            'contacted': { text: 'Đã liên hệ', class: 'status-contacted' },
+            'completed': { text: 'Hoàn thành', class: 'status-completed' },
+            'cancelled': { text: 'Đã hủy', class: 'status-cancelled' }
+        };
+
+        async function loadOrders() {
+            const container = document.getElementById('orders-container');
+            try {
+                const res = await fetch('api/my_orders.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: user.id })
+                });
+                const data = await res.json();
+
+                if (!data.success || !data.orders || data.orders.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-5">
+                            <i class="fas fa-box-open text-muted mb-3" style="font-size: 60px; opacity: 0.3;"></i>
+                            <h5 class="text-muted">Bạn chưa có đơn hàng nào</h5>
+                            <a href="products.html" class="btn btn-moto-primary rounded-pill mt-3 px-4">Mua Sắm Ngay</a>
+                        </div>`;
+                    return;
+                }
+
+                container.innerHTML = data.orders.map(order => {
+                    const status = statusMap[order.status] || statusMap['pending'];
+                    const date = new Date(order.created_at).toLocaleDateString('vi-VN', {
+                        day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                    });
+
+                    const itemsHTML = order.items.map(item => `
+                        <div class="order-item-row">
+                            <img src="${fixImageUrl(item.main_image)}" alt="${item.name || 'SP'}">
+                            <div class="flex-grow-1">
+                                <div class="fw-medium" style="font-size:0.9rem;">${item.name || 'Sản phẩm đã xóa'}</div>
+                                <div class="text-muted small">SL: ${item.quantity} × ${formatCurrency(item.unit_price)}</div>
+                            </div>
+                            <div class="fw-bold text-primary-moto" style="font-size:0.85rem;">
+                                ${formatCurrency(item.unit_price * item.quantity)}
+                            </div>
+                        </div>
+                    `).join('');
+
+                    return `
+                        <div class="order-card">
+                            <div class="order-card-header">
+                                <div>
+                                    <span class="fw-bold">#${order.order_code}</span>
+                                    <span class="text-muted small ms-2">${date}</span>
+                                </div>
+                                <span class="order-status-badge ${status.class}">${status.text}</span>
+                            </div>
+                            <div class="order-card-body">
+                                ${itemsHTML}
+                                <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                                    <span class="text-muted small">
+                                        <i class="fas fa-map-marker-alt me-1"></i>${order.shipping_address}
+                                    </span>
+                                    <div class="text-end">
+                                        <small class="text-muted">Tổng tiền:</small>
+                                        <div class="fw-bold fs-5 text-primary-moto">${formatCurrency(order.total_amount)}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
+                }).join('');
+
+            } catch (err) {
+                container.innerHTML = `<div class="text-center py-5 text-danger"><h6>Lỗi kết nối Server!</h6></div>`;
+            }
+        }
+
+        loadOrders();
+    </script>
+</body>
+</html>

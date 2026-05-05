@@ -51,6 +51,38 @@ try {
         $totalAmount += $price * $item['quantity'];
     }
 
+    // 2.5. Xử lý mã giảm giá (nếu có)
+    $couponCode = $input['coupon_code'] ?? null;
+    $discountAmount = (int)($input['discount_amount'] ?? 0);
+
+    if ($couponCode && $discountAmount > 0) {
+        // Verify coupon vẫn hợp lệ
+        $stmtCoupon = $pdo->prepare("SELECT * FROM coupons WHERE code = ? AND status = 'active'");
+        $stmtCoupon->execute([$couponCode]);
+        $coupon = $stmtCoupon->fetch();
+
+        if ($coupon) {
+            // Tính lại discount server-side để đảm bảo chính xác
+            $serverDiscount = 0;
+            if ($coupon['discount_type'] === 'percent') {
+                $serverDiscount = $totalAmount * ($coupon['discount_value'] / 100);
+                if ($coupon['max_discount'] && $serverDiscount > $coupon['max_discount']) {
+                    $serverDiscount = $coupon['max_discount'];
+                }
+            } else {
+                $serverDiscount = $coupon['discount_value'];
+            }
+            if ($serverDiscount > $totalAmount) $serverDiscount = $totalAmount;
+            $discountAmount = $serverDiscount;
+            $totalAmount -= $discountAmount;
+
+            // Tăng used_count
+            $pdo->prepare("UPDATE coupons SET used_count = used_count + 1 WHERE id = ?")->execute([$coupon['id']]);
+        } else {
+            $discountAmount = 0;
+        }
+    }
+
     // 3. Tạo mã đơn hàng (VD: HD2603-A1B2)
     $orderCode = 'HD' . date('dm') . '-' . strtoupper(substr(bin2hex(random_bytes(2)), 0, 4));
 
@@ -66,7 +98,7 @@ try {
         $phone,
         $address,
         $totalAmount,
-        $input['customer']['note'] ?? ''
+        ($couponCode ? "[Mã giảm giá: $couponCode - Giảm " . number_format($discountAmount,0,',','.') . "₫] " : '') . ($input['customer']['note'] ?? '')
     ]);
     $orderId = $pdo->lastInsertId();
 

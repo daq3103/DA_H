@@ -4,27 +4,15 @@
  */
 
 const API_BASE = '../api/';
-const formatCurrency = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
-const formatDate = (d) => d ? new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—';
-
-/**
- * Sửa đường dẫn ảnh upload local.
- * Nếu ảnh là URL đầy đủ (http/https) thì giữ nguyên.
- * Nếu ảnh là đường dẫn /uploads/... (thiếu base path) thì tự động thêm base path.
- * Admin page nằm trong /shop/admin/ nên cần đường dẫn ../uploads/...
- */
-function fixImageUrl(url) {
-    if (!url) return 'https://via.placeholder.com/80x60?text=No+Image';
-    // URL đầy đủ (http/https) → giữ nguyên
-    if (url.startsWith('http://') || url.startsWith('https://')) return url;
-    // Đường dẫn đã đúng (bắt đầu bằng ../uploads hoặc tương đối đúng)
-    if (url.startsWith('../uploads/')) return url;
-    // Đường dẫn sai: /uploads/products/... → sửa thành ../uploads/products/...
-    // (vì admin page ở /shop/admin/, cần lùi 1 cấp về /shop/)
-    if (url.startsWith('/uploads/')) return '..' + url;
-    // Đường dẫn kiểu /shop/uploads/... → sửa thành ../uploads/...
-    if (url.match(/^\/\w+\/uploads\//)) return '../uploads/' + url.split('/uploads/')[1];
-    return url;
+const { formatCurrency, formatDateVN: formatDate, fixImageUrlForAdmin: fixImageUrl } = window.MotoShared || {};
+const el = (id) => document.getElementById(id);
+const onReady = (callback) => document.addEventListener('DOMContentLoaded', callback);
+if (
+    typeof formatCurrency !== 'function' ||
+    typeof formatDate !== 'function' ||
+    typeof fixImageUrl !== 'function'
+) {
+    throw new Error('MotoShared chưa được tải. Vui lòng include ../js/shared/moto-shared.js trước ../js/admin.js');
 }
 
 // =================== AUTH ===================
@@ -91,36 +79,9 @@ const DEMO_CONTACTS = [
 
 // State
 let adminProducts = [];
-let adminOrders = [];
 let adminCustomers = [];
 let adminNews = [];
 let adminContacts = [];
-
-// =================== INIT ===================
-document.addEventListener('DOMContentLoaded', async () => {
-    const admin = checkAuth();
-    if (!admin) return;
-
-    // Set admin info in topbar
-    const nameEl = document.getElementById('topbar-admin-name');
-    const avatarEl = document.getElementById('topbar-avatar');
-    if (nameEl) nameEl.textContent = admin.full_name || 'Admin';
-    if (avatarEl) avatarEl.textContent = (admin.full_name || 'A').charAt(0).toUpperCase();
-
-    // Close sidebar on overlay click
-    const overlay = document.getElementById('sidebarOverlay');
-    if (overlay) overlay.addEventListener('click', toggleSidebar);
-
-    // Determine which page we're on and load data
-    const page = getCurrentPage();
-
-    if (page === 'index') await loadDashboard();
-    if (page === 'products') await loadProducts();
-    if (page === 'orders') await loadOrders();
-    if (page === 'customers') await loadCustomers();
-    if (page === 'news') await loadNews();
-    if (page === 'contacts') await loadContacts();
-});
 
 function getCurrentPage() {
     const path = window.location.pathname;
@@ -129,6 +90,7 @@ function getCurrentPage() {
     if (path.includes('customers.html')) return 'customers';
     if (path.includes('news.html')) return 'news';
     if (path.includes('contacts.html')) return 'contacts';
+    if (path.includes('coupons.html')) return 'coupons';
     return 'index';
 }
 
@@ -275,26 +237,32 @@ function filterProducts() {
 }
 
 function openAddProduct() {
-    document.getElementById('productModalTitle').textContent = 'Thêm Sản Phẩm Mới';
+    el('productModalTitle').textContent = 'Thêm Sản Phẩm Mới';
     // Không reset toàn bộ form, chỉ reset các field cụ thể (trừ prod_image để giữ URL đã upload)
-    document.getElementById('prod_id').value = '';
-    document.getElementById('prod_name').value = '';
-    document.getElementById('prod_slug').value = '';
-    document.getElementById('prod_brand').value = '';
-    document.getElementById('prod_category').value = '';
-    document.getElementById('prod_status').value = 'active';
-    document.getElementById('prod_price').value = '';
-    document.getElementById('prod_sale_price').value = '';
-    document.getElementById('prod_stock').value = '0';
-    document.getElementById('prod_image').value = ''; // Reset URL ảnh
-    document.getElementById('prod_desc').value = '';
-    document.getElementById('prod_is_new').checked = false;
-    document.getElementById('prod_is_hot').checked = false;
-    document.getElementById('spec_engine').value = '';
-    document.getElementById('spec_displacement').value = '';
-    document.getElementById('spec_power').value = '';
-    document.getElementById('spec_weight').value = '';
-    if (document.getElementById('spec_fuel')) document.getElementById('spec_fuel').value = '';
+    const defaults = {
+        prod_id: '',
+        prod_name: '',
+        prod_slug: '',
+        prod_brand: '',
+        prod_category: '',
+        prod_status: 'active',
+        prod_price: '',
+        prod_sale_price: '',
+        prod_stock: '0',
+        prod_image: '',
+        prod_desc: '',
+        spec_engine: '',
+        spec_displacement: '',
+        spec_power: '',
+        spec_weight: '',
+        spec_fuel: ''
+    };
+    Object.entries(defaults).forEach(([id, value]) => {
+        const input = el(id);
+        if (input) input.value = value;
+    });
+    el('prod_is_new').checked = false;
+    el('prod_is_hot').checked = false;
     // Reset image preview
     const preview = document.getElementById('image-preview');
     if (preview) preview.innerHTML = '<i class="fas fa-image text-muted"></i>';
@@ -357,8 +325,8 @@ async function uploadProductImage(input) {
 
 // Preview ảnh khi dán URL
 function previewImageURL() {
-    const url = document.getElementById('prod_image').value.trim();
-    const preview = document.getElementById('image-preview');
+    const url = el('prod_image').value.trim();
+    const preview = el('image-preview');
     if (url) {
         preview.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='<i class=\\'fas fa-exclamation-triangle text-warning\\'></i>'">`;
     } else {
@@ -367,9 +335,9 @@ function previewImageURL() {
 }
 
 // Gắn event listeners cho upload ảnh (tránh dùng inline handler)
-document.addEventListener('DOMContentLoaded', () => {
-    const fileInput = document.getElementById('prod_image_file');
-    const urlInput = document.getElementById('prod_image');
+onReady(() => {
+    const fileInput = el('prod_image_file');
+    const urlInput = el('prod_image');
     if (fileInput) fileInput.addEventListener('change', function() { uploadProductImage(this); });
     if (urlInput) urlInput.addEventListener('input', previewImageURL);
 });
@@ -377,25 +345,31 @@ document.addEventListener('DOMContentLoaded', () => {
 function openEditProduct(id) {
     const p = adminProducts.find(x => x.id === id);
     if (!p) return;
-    document.getElementById('productModalTitle').textContent = 'Sửa Sản Phẩm';
-    document.getElementById('prod_id').value = p.id;
-    document.getElementById('prod_name').value = p.name;
-    document.getElementById('prod_slug').value = p.slug || '';
-    document.getElementById('prod_brand').value = p.brand_id || '';
-    document.getElementById('prod_category').value = p.category_id || '';
-    document.getElementById('prod_status').value = p.status || 'active';
-    document.getElementById('prod_price').value = p.price;
-    document.getElementById('prod_sale_price').value = p.sale_price || '';
-    document.getElementById('prod_stock').value = p.stock_quantity || 0;
-    document.getElementById('prod_image').value = p.image || '';
-    document.getElementById('prod_desc').value = p.description || '';
-    document.getElementById('prod_is_new').checked = p.is_new;
-    document.getElementById('prod_is_hot').checked = p.is_hot;
+    el('productModalTitle').textContent = 'Sửa Sản Phẩm';
+    const fields = {
+        prod_id: p.id,
+        prod_name: p.name,
+        prod_slug: p.slug || '',
+        prod_brand: p.brand_id || '',
+        prod_category: p.category_id || '',
+        prod_status: p.status || 'active',
+        prod_price: p.price,
+        prod_sale_price: p.sale_price || '',
+        prod_stock: p.stock_quantity || 0,
+        prod_image: p.image || '',
+        prod_desc: p.description || ''
+    };
+    Object.entries(fields).forEach(([id, value]) => {
+        const input = el(id);
+        if (input) input.value = value;
+    });
+    el('prod_is_new').checked = p.is_new;
+    el('prod_is_hot').checked = p.is_hot;
     if (p.specs) {
-        document.getElementById('spec_engine').value = p.specs.engine_type || '';
-        document.getElementById('spec_displacement').value = p.specs.displacement || '';
-        document.getElementById('spec_power').value = p.specs.max_power || '';
-        document.getElementById('spec_weight').value = p.specs.weight || '';
+        el('spec_engine').value = p.specs.engine_type || '';
+        el('spec_displacement').value = p.specs.displacement || '';
+        el('spec_power').value = p.specs.max_power || '';
+        el('spec_weight').value = p.specs.weight || '';
     }
     // Hiện preview ảnh hiện tại
     const preview = document.getElementById('image-preview');
@@ -422,8 +396,8 @@ async function deleteProduct(id) {
 }
 
 // Product form submit
-document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('productForm');
+onReady(() => {
+    const form = el('productForm');
     if (form) {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -494,118 +468,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
-
-// =================== ORDERS ===================
-async function loadOrders() {
-    try {
-        const res = await fetch(API_BASE + 'admin_orders.php');
-        adminOrders = await res.json();
-        if (adminOrders.error) throw new Error();
-    } catch (err) {
-        adminOrders = [...DEMO_ORDERS];
-    }
-    renderOrdersTable(adminOrders);
-    updateOrderStats();
-}
-
-function updateOrderStats() {
-    const stats = { pending: 0, contacted: 0, completed: 0, cancelled: 0 };
-    adminOrders.forEach(o => { if (stats[o.status] !== undefined) stats[o.status]++; });
-    const el = (id) => document.getElementById(id);
-    if (el('order-stat-pending')) el('order-stat-pending').textContent = stats.pending;
-    if (el('order-stat-contacted')) el('order-stat-contacted').textContent = stats.contacted;
-    if (el('order-stat-completed')) el('order-stat-completed').textContent = stats.completed;
-    if (el('order-stat-cancelled')) el('order-stat-cancelled').textContent = stats.cancelled;
-}
-
-function renderOrdersTable(orders) {
-    const tbody = document.getElementById('orders-tbody');
-    if (!tbody) return;
-    if (orders.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="empty-state"><i class="fas fa-shopping-bag d-block"></i><h5>Chưa có đơn hàng nào</h5></div></td></tr>';
-        return;
-    }
-    tbody.innerHTML = orders.map(o => `
-        <tr>
-            <td><strong>#${o.id}</strong></td>
-            <td>${o.customer_name}</td>
-            <td>${o.phone || '—'}</td>
-            <td class="fw-bold">${formatCurrency(o.total_amount)}</td>
-            <td>
-                <select class="form-select form-select-sm" style="width:140px;font-size:0.78rem;border-radius:8px;" onchange="updateOrderStatus(${o.id}, this.value)">
-                    <option value="pending" ${o.status==='pending'?'selected':''}>Chờ xử lý</option>
-                    <option value="contacted" ${o.status==='contacted'?'selected':''}>Đã liên hệ</option>
-                    <option value="completed" ${o.status==='completed'?'selected':''}>Hoàn thành</option>
-                    <option value="cancelled" ${o.status==='cancelled'?'selected':''}>Đã hủy</option>
-                </select>
-            </td>
-            <td class="text-muted">${formatDate(o.order_date)}</td>
-            <td>
-                <button class="btn-action btn-view" onclick="viewOrderDetail(${o.id})" title="Xem"><i class="fas fa-eye"></i></button>
-            </td>
-        </tr>
-    `).join('');
-}
-
-function filterOrders() {
-    const q = document.getElementById('searchOrder').value.toLowerCase();
-    const filtered = adminOrders.filter(o => o.customer_name.toLowerCase().includes(q) || String(o.id).includes(q));
-    renderOrdersTable(filtered);
-}
-
-async function updateOrderStatus(id, newStatus) {
-    try {
-        await fetch(API_BASE + 'admin_orders.php', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id, status: newStatus })
-        });
-    } catch (err) { /* demo */ }
-    const order = adminOrders.find(o => o.id === id);
-    if (order) order.status = newStatus;
-    updateOrderStats();
-}
-
-function viewOrderDetail(id) {
-    const o = adminOrders.find(x => x.id === id);
-    if (!o) return;
-    document.getElementById('order-detail-id').textContent = '#' + o.id;
-    document.getElementById('order-detail-body').innerHTML = `
-        <div class="row g-3">
-            <div class="col-md-6">
-                <h6 class="fw-bold mb-3"><i class="fas fa-user me-2"></i>Thông tin khách hàng</h6>
-                <p class="mb-1"><strong>Họ tên:</strong> ${o.customer_name}</p>
-                <p class="mb-1"><strong>SĐT:</strong> ${o.phone || '—'}</p>
-                <p class="mb-1"><strong>Địa chỉ:</strong> ${o.address || '—'}</p>
-                <p class="mb-0"><strong>Ghi chú:</strong> ${o.notes || 'Không có'}</p>
-            </div>
-            <div class="col-md-6">
-                <h6 class="fw-bold mb-3"><i class="fas fa-info-circle me-2"></i>Thông tin đơn hàng</h6>
-                <p class="mb-1"><strong>Mã đơn:</strong> #${o.id}</p>
-                <p class="mb-1"><strong>Ngày đặt:</strong> ${formatDate(o.order_date)}</p>
-                <p class="mb-1"><strong>Tổng tiền:</strong> <span class="text-danger fw-bold">${formatCurrency(o.total_amount)}</span></p>
-                <p class="mb-0"><strong>Trạng thái:</strong> <span class="status-badge ${o.status}">${getStatusText(o.status)}</span></p>
-            </div>
-            <div class="col-12">
-                <h6 class="fw-bold mb-3 mt-2"><i class="fas fa-list me-2"></i>Sản phẩm trong đơn</h6>
-                <table class="admin-table">
-                    <thead><tr><th>Sản phẩm</th><th>Số lượng</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead>
-                    <tbody>
-                        ${(o.items || []).map(i => `
-                            <tr>
-                                <td>${i.product_name}</td>
-                                <td>${i.quantity}</td>
-                                <td>${formatCurrency(i.unit_price)}</td>
-                                <td class="fw-bold">${formatCurrency(i.quantity * i.unit_price)}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    `;
-    new bootstrap.Modal(document.getElementById('orderDetailModal')).show();
-}
 
 // =================== CUSTOMERS ===================
 async function loadCustomers() {
@@ -709,8 +571,8 @@ async function deleteNews(id) {
     renderNewsTable(adminNews);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('newsForm');
+onReady(() => {
+    const form = el('newsForm');
     if (form) {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -836,3 +698,4 @@ function viewContactDetail(id) {
     }
     new bootstrap.Modal(document.getElementById('contactDetailModal')).show();
 }
+

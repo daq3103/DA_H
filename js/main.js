@@ -3,50 +3,229 @@
  * Xử lý giao diện, giỏ hàng local, và render sản phẩm
  */
 
-// === Tự động chuyển hướng sang localhost nếu mở bằng file:// ===
-(function() {
-    if (window.location.protocol === 'file:') {
-        // Lấy đường dẫn file, tìm thư mục gốc project (VD: /shop/)
-        const path = window.location.pathname; // VD: /D:/code/HUMG_DA/shop/index.html
-        const match = path.match(/\/shop\/(.*)/i);
-        if (match) {
-            const page = match[1] || 'index.html';
-            window.location.href = 'http://localhost/shop/' + page;
-            return; // Dừng thực thi JS tiếp
-        }
+const { formatCurrency, fixImageUrlForStore: fixImageUrl } = window.MotoShared || {};
+
+if (typeof formatCurrency !== 'function' || typeof fixImageUrl !== 'function') {
+    throw new Error('MotoShared chưa được tải. Vui lòng include js/shared/moto-shared.js trước js/main.js');
+}
+
+// ============== TOAST NOTIFICATION SYSTEM ==============
+function showToast(message, type = 'success', duration = 3500) {
+    let container = document.querySelector('.toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'toast-container';
+        document.body.appendChild(container);
     }
-})();
 
-// Format tiền tệ VNĐ
-const formatCurrency = (number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(number);
-};
+    const icons = {
+        success: 'fa-check',
+        error: 'fa-times',
+        warning: 'fa-exclamation',
+        info: 'fa-info'
+    };
+    const titles = {
+        success: 'Thành công',
+        error: 'Lỗi',
+        warning: 'Cảnh báo',
+        info: 'Thông báo'
+    };
 
-/**
- * Sửa đường dẫn ảnh upload local.
- * Nếu ảnh là URL đầy đủ (http/https) thì giữ nguyên.
- * Nếu ảnh là đường dẫn /uploads/... thì sửa thành đường dẫn đúng.
- * Frontend page nằm ở /shop/ nên cần đường dẫn uploads/... (tương đối)
- */
-function fixImageUrl(url) {
-    if (!url) return 'https://via.placeholder.com/400x300?text=No+Image';
-    // URL đầy đủ (http/https) → giữ nguyên
-    if (url.startsWith('http://') || url.startsWith('https://')) return url;
-    // Đường dẫn /uploads/... → sửa thành uploads/... (bỏ dấu / đầu)
-    if (url.startsWith('/uploads/')) return url.substring(1);
-    // Đường dẫn /shop/uploads/... → sửa thành uploads/...
-    if (url.match(/^\/\w+\/uploads\//)) return 'uploads/' + url.split('/uploads/')[1];
-    return url;
+    const toast = document.createElement('div');
+    toast.className = `toast-item toast-${type}`;
+    toast.style.position = 'relative';
+    toast.innerHTML = `
+        <div class="toast-icon"><i class="fas ${icons[type]}"></i></div>
+        <div class="toast-content">
+            <strong>${titles[type]}</strong>
+            <span>${message}</span>
+        </div>
+        <button class="toast-close" onclick="this.parentElement.classList.add('toast-out');setTimeout(()=>this.parentElement.remove(),300)">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="toast-progress" style="animation-duration:${duration}ms"></div>
+    `;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.classList.add('toast-out');
+        setTimeout(() => toast.remove(), 300);
+    }, duration);
+}
+
+// ============== SEARCH FUNCTIONALITY ==============
+function initSearch() {
+    const searchForms = document.querySelectorAll('form:has(input[type="search"])');
+    searchForms.forEach(form => {
+        const input = form.querySelector('input[type="search"]');
+        if (!input) return;
+
+        // Make form position relative for suggestions
+        form.style.position = 'relative';
+
+        // Create suggestions dropdown
+        const suggestionsDiv = document.createElement('div');
+        suggestionsDiv.className = 'search-suggestions';
+        form.appendChild(suggestionsDiv);
+
+        // Handle form submit -> redirect to products page
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const query = input.value.trim();
+            if (query) {
+                window.location.href = `products.html?search=${encodeURIComponent(query)}`;
+            }
+        });
+
+        // Handle input for realtime suggestions
+        let debounceTimer;
+        input.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            const query = input.value.trim().toLowerCase();
+            
+            if (query.length < 2 || productsData.length === 0) {
+                suggestionsDiv.classList.remove('show');
+                return;
+            }
+
+            debounceTimer = setTimeout(() => {
+                const results = productsData.filter(p =>
+                    p.name.toLowerCase().includes(query) ||
+                    p.brand.toLowerCase().includes(query) ||
+                    p.category.toLowerCase().includes(query)
+                ).slice(0, 5);
+
+                if (results.length === 0) {
+                    suggestionsDiv.innerHTML = `<div class="search-no-result"><i class="fas fa-search me-2"></i>Không tìm thấy "${input.value.trim()}"</div>`;
+                } else {
+                    suggestionsDiv.innerHTML = results.map(p => {
+                        const price = p.sale_price || p.price;
+                        return `
+                            <a href="product-detail.html?id=${p.id}" class="search-suggestion-item">
+                                <img src="${fixImageUrl(p.image)}" alt="${p.name}">
+                                <div class="suggestion-info">
+                                    <div class="suggestion-name">${p.name}</div>
+                                    <div class="suggestion-price">${formatCurrency(price)}</div>
+                                </div>
+                            </a>`;
+                    }).join('') + `<a href="products.html?search=${encodeURIComponent(input.value.trim())}" class="search-suggestion-item" style="justify-content:center;color:var(--moto-primary);font-weight:600;">
+                        Xem tất cả kết quả <i class="fas fa-arrow-right ms-2"></i>
+                    </a>`;
+                }
+                suggestionsDiv.classList.add('show');
+            }, 250);
+        });
+
+        // Close on click outside
+        document.addEventListener('click', (e) => {
+            if (!form.contains(e.target)) suggestionsDiv.classList.remove('show');
+        });
+
+        input.addEventListener('focus', () => {
+            if (suggestionsDiv.innerHTML && input.value.trim().length >= 2) {
+                suggestionsDiv.classList.add('show');
+            }
+        });
+    });
+}
+
+// ============== PAGINATION ==============
+const ITEMS_PER_PAGE = 8;
+let currentPage = 1;
+const PRODUCT_EMPTY_STATE_HTML = `<div class="col-12 text-center py-5"><h5 class="text-muted">Không tìm thấy sản phẩm phù hợp.</h5></div>`;
+
+function renderPagination(totalItems, container) {
+    const paginationNav = document.querySelector('.pagination');
+    if (!paginationNav) return;
+
+    const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+    if (totalPages <= 1) {
+        paginationNav.closest('nav').style.display = 'none';
+        return;
+    }
+    paginationNav.closest('nav').style.display = 'block';
+
+    let html = `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+        <a class="page-link border-0 text-muted" href="#" data-page="${currentPage - 1}">Trang trước</a>
+    </li>`;
+
+    for (let i = 1; i <= totalPages; i++) {
+        if (totalPages > 7 && i > 2 && i < totalPages - 1 && Math.abs(i - currentPage) > 1) {
+            if (i === 3 || i === totalPages - 2) html += `<li class="page-item disabled"><span class="page-link border-0">...</span></li>`;
+            continue;
+        }
+        html += `<li class="page-item ${i === currentPage ? 'active' : ''}">
+            <a class="page-link border-0 ${i === currentPage ? 'bg-primary-moto text-white' : 'text-dark'}" href="#" data-page="${i}">${i}</a>
+        </li>`;
+    }
+
+    html += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+        <a class="page-link border-0 text-muted" href="#" data-page="${currentPage + 1}">Trang sau</a>
+    </li>`;
+
+    paginationNav.innerHTML = html;
+
+    paginationNav.querySelectorAll('a[data-page]').forEach(a => {
+        a.addEventListener('click', (e) => {
+            e.preventDefault();
+            const page = parseInt(a.dataset.page);
+            if (page >= 1 && page <= totalPages && page !== currentPage) {
+                currentPage = page;
+                if (typeof applyFiltersAndRender === 'function') applyFiltersAndRender();
+                window.scrollTo({ top: 300, behavior: 'smooth' });
+            }
+        });
+    });
+}
+
+function paginateArray(arr) {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return arr.slice(start, start + ITEMS_PER_PAGE);
 }
 
 // State chung
 let cart = JSON.parse(localStorage.getItem('motoshop_cart')) || [];
 let productsData = [];
 
-// Init khi DOM load xong
-document.addEventListener('DOMContentLoaded', async () => {
+function filterProductsByKeyword(products, keyword) {
+    if (!keyword) return [...products];
+    const q = keyword.toLowerCase();
+    return products.filter(p =>
+        p.name.toLowerCase().includes(q) ||
+        p.brand.toLowerCase().includes(q) ||
+        p.category.toLowerCase().includes(q)
+    );
+}
+
+function renderProductsGridState(productsGrid, products) {
+    if (!productsGrid) return;
+    if (products.length === 0) {
+        productsGrid.innerHTML = PRODUCT_EMPTY_STATE_HTML;
+        return;
+    }
+    productsGrid.innerHTML = products.map(p => createProductCardHTML(p)).join('');
+}
+
+function getProductsPageParams() {
+    const params = new URLSearchParams(window.location.search);
+    return {
+        filterBrand: params.get('brand'),
+        filterCategory: params.get('category'),
+        searchQuery: params.get('search')
+    };
+}
+
+// Init storefront (được gọi từ main-bootstrap.js)
+window.motoInitStorefront = async function() {
     updateCartIconCount();
     initUserAuth();
+
+    // Hiện toast đặt hàng thành công (nếu vừa redirect từ cart)
+    const orderMsg = sessionStorage.getItem('motoshop_order_success');
+    if (orderMsg) {
+        sessionStorage.removeItem('motoshop_order_success');
+        setTimeout(() => showToast(orderMsg, 'success', 5000), 500);
+    }
 
     // Dùng FETCH qua API PHP trên XAMPP (khắc phục lỗi CORS từ file:// trước đó)
     try {
@@ -58,6 +237,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.error("Lỗi từ DB: ", productsData.message);
                 return;
             }
+
+            // Init search sau khi có data
+            initSearch();
 
             // Gọi render khi có data
             if (document.getElementById('new-arrivals-container')) renderHomeProducts();
@@ -77,7 +259,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(el) el.innerHTML = `<div class="col-12 text-center py-5 text-danger"><h5>Không thể kết nối CSDL MySQL. Bạn đã bật Apache & MySQL trên XAMPP chưa?</h5></div>`;
         });
     }
-});
+};
 
 function renderHomeProducts() {
     const newArrivalsContainer = document.getElementById('new-arrivals-container');
@@ -97,11 +279,17 @@ function renderProductsPage() {
     const countSpan = document.getElementById('product-count');
     if (!productsGrid) return;
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const filterBrand = urlParams.get('brand');
-    const filterCategory = urlParams.get('category');
+    const { filterBrand, filterCategory, searchQuery } = getProductsPageParams();
 
     let filtered = [...productsData];
+
+    // Search keyword filter
+    if (searchQuery) {        
+        filtered = filterProductsByKeyword(filtered, searchQuery);
+        // Show search info
+        const headerTitle = document.querySelector('.display-4');
+        if (headerTitle) headerTitle.textContent = `Kết quả tìm kiếm: "${searchQuery}"`;
+    }
 
     if (filterBrand) {
         filtered = filtered.filter(p => p.brand.toLowerCase() === filterBrand.toLowerCase());
@@ -119,13 +307,24 @@ function renderProductsPage() {
         });
     }
 
-    if(filtered.length === 0) {
-        productsGrid.innerHTML = `<div class="col-12 text-center py-5"><h5 class="text-muted">Không tìm thấy sản phẩm phù hợp.</h5></div>`;
-    } else {
-        productsGrid.innerHTML = filtered.map(p => createProductCardHTML(p)).join('');
-    }
-    
     countSpan.textContent = filtered.length;
+    renderPagination(filtered.length);
+    const pageItems = paginateArray(filtered);
+    renderProductsGridState(productsGrid, pageItems);
+}
+
+// Global reference for pagination callback
+let _lastFilteredProducts = [];
+
+function applyFiltersAndRender() {
+    const productsGrid = document.getElementById('products-grid');
+    if (!productsGrid) return;
+    
+    const countSpan = document.getElementById('product-count');
+    countSpan.textContent = _lastFilteredProducts.length;
+    renderPagination(_lastFilteredProducts.length);
+    const pageItems = paginateArray(_lastFilteredProducts);
+    renderProductsGridState(productsGrid, pageItems);
 }
 
 function initFilters() {
@@ -136,7 +335,8 @@ function initFilters() {
     const sortSelect = document.getElementById('sort-select');
 
     const updateFilters = () => {
-        let filtered = [...productsData];
+        const { searchQuery } = getProductsPageParams();
+        let filtered = filterProductsByKeyword(productsData, searchQuery);
 
         const checkedBrands = Array.from(brands).filter(cb => cb.checked).map(cb => cb.value);
         if (checkedBrands.length > 0) {
@@ -166,14 +366,9 @@ function initFilters() {
             filtered.sort((a,b) => a.name.localeCompare(b.name));
         }
 
-        const productsGrid = document.getElementById('products-grid');
-        document.getElementById('product-count').textContent = filtered.length;
-        
-        if (filtered.length === 0) {
-            productsGrid.innerHTML = `<div class="col-12 text-center py-5"><h5 class="text-muted">Không tìm thấy sản phẩm phù hợp.</h5></div>`;
-        } else {
-            productsGrid.innerHTML = filtered.map(p => createProductCardHTML(p)).join('');
-        }
+        currentPage = 1;
+        _lastFilteredProducts = filtered;
+        applyFiltersAndRender();
     };
 
     brands.forEach(cb => cb.addEventListener('change', updateFilters));
@@ -189,8 +384,13 @@ function initFilters() {
         });
         sortSelect.value = 'default';
         window.history.replaceState({}, '', window.location.pathname);
-        updateFilters();
+        currentPage = 1;
+        _lastFilteredProducts = [...productsData];
+        applyFiltersAndRender();
     });
+
+    // Initialize _lastFilteredProducts
+    _lastFilteredProducts = [...productsData];
 }
 
 function renderProductDetail() {
@@ -263,12 +463,6 @@ function renderProductDetail() {
             </div>
         </div>
     `;
-
-    document.getElementById('leadForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        alert("Chúng tôi đã nhận được yêu cầu tư vấn cho xe " + product.name + ". Nhân viên sẽ sớm gọi lại cho bạn.");
-        this.reset();
-    });
 
     window.changeQty = function(delta) {
         const input = document.getElementById('qty-input');
@@ -362,7 +556,7 @@ function addToCart(productId, quantity = 1, alertUser = true) {
     localStorage.setItem('motoshop_cart', JSON.stringify(cart));
     updateCartIconCount();
     
-    if(alertUser) alert(`Đã thêm ${product.name} vào giỏ hàng!`);
+    if(alertUser) showToast(`Đã thêm <b>${product.name}</b> vào giỏ hàng!`, 'success');
 }
 
 function updateCartIconCount() {
@@ -434,8 +628,109 @@ function renderCartPage() {
     container.innerHTML = html;
     
     document.getElementById('cart-total-tmp').textContent = formatCurrency(totalValue);
-    document.getElementById('cart-total-final').textContent = formatCurrency(totalValue);
+
+    // Tính giảm giá coupon
+    const discountRow = document.getElementById('discount-row');
+    const discountEl = document.getElementById('cart-discount');
+    let finalTotal = totalValue;
+    
+    if (activeCoupon && activeCoupon.discount_amount) {
+        // Re-calculate discount based on current total
+        let discountAmt = 0;
+        if (activeCoupon.discount_type === 'percent') {
+            discountAmt = totalValue * (activeCoupon.discount_value / 100);
+            if (activeCoupon.max_discount && discountAmt > activeCoupon.max_discount) {
+                discountAmt = activeCoupon.max_discount;
+            }
+        } else {
+            discountAmt = activeCoupon.discount_value;
+        }
+        if (discountAmt > totalValue) discountAmt = totalValue;
+        activeCoupon.discount_amount = discountAmt;
+        
+        if (discountRow) { discountRow.classList.remove('d-none'); }
+        if (discountEl) { discountEl.textContent = '- ' + formatCurrency(discountAmt); }
+        finalTotal = totalValue - discountAmt;
+    } else {
+        if (discountRow) { discountRow.classList.add('d-none'); }
+    }
+
+    document.getElementById('cart-total-final').textContent = formatCurrency(finalTotal);
 }
+
+// ============== COUPON SYSTEM ==============
+let activeCoupon = null;
+
+window.applyCoupon = async function() {
+    const input = document.getElementById('coupon-input');
+    const msgEl = document.getElementById('coupon-message');
+    const appliedEl = document.getElementById('coupon-applied');
+    const btn = document.getElementById('btn-apply-coupon');
+    const code = input.value.trim().toUpperCase();
+
+    if (!code) {
+        msgEl.style.display = 'block';
+        msgEl.innerHTML = '<span class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>Vui lòng nhập mã giảm giá</span>';
+        return;
+    }
+
+    // Tính tổng giỏ hàng hiện tại
+    let orderTotal = 0;
+    cart.forEach(item => {
+        const p = item.product;
+        orderTotal += (p.sale_price || p.price) * item.quantity;
+    });
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+    try {
+        const res = await fetch('api/coupon.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code, order_total: orderTotal })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            activeCoupon = data.coupon;
+            // Hiện coupon applied
+            appliedEl.classList.remove('d-none');
+            document.getElementById('coupon-code-display').textContent = data.coupon.code;
+            document.getElementById('coupon-desc-display').textContent = '- ' + data.coupon.description;
+            input.disabled = true;
+            btn.style.display = 'none';
+            msgEl.style.display = 'none';
+            showToast(`Áp dụng mã <b>${data.coupon.code}</b> thành công! Giảm ${formatCurrency(data.coupon.discount_amount)}`, 'success');
+            renderCartPage(); // Re-render để cập nhật giá
+        } else {
+            msgEl.style.display = 'block';
+            msgEl.innerHTML = `<span class="text-danger"><i class="fas fa-times-circle me-1"></i>${data.message}</span>`;
+            activeCoupon = null;
+        }
+    } catch (err) {
+        msgEl.style.display = 'block';
+        msgEl.innerHTML = '<span class="text-danger"><i class="fas fa-times-circle me-1"></i>Lỗi kết nối Server!</span>';
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = 'Áp dụng';
+};
+
+window.removeCoupon = function() {
+    activeCoupon = null;
+    const input = document.getElementById('coupon-input');
+    const appliedEl = document.getElementById('coupon-applied');
+    const btn = document.getElementById('btn-apply-coupon');
+    
+    input.disabled = false;
+    input.value = '';
+    btn.style.display = 'block';
+    appliedEl.classList.add('d-none');
+    document.getElementById('coupon-message').style.display = 'none';
+    showToast('Đã xóa mã giảm giá', 'info');
+    renderCartPage();
+};
 
 window.updateCartQty = function(id, delta) {
     const item = cart.find(i => i.product.id === id);
@@ -479,25 +774,29 @@ window.handleCheckout = async function(e) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 customer: { name, phone, address, note },
-                cart: cart
+                cart: cart,
+                coupon_code: activeCoupon ? activeCoupon.code : null,
+                discount_amount: activeCoupon ? activeCoupon.discount_amount : 0
             })
         });
         
         const data = await res.json();
         
         if (data.success) {
-            alert(`Cảm ơn ${name}! MotoShop đã nhận được đơn đặt hàng của bạn. (Mã đơn: #${data.order_id}). Chúng tôi sẽ liên hệ sớm nhất để tư vấn.`);
             cart = [];
+            activeCoupon = null;
             localStorage.removeItem('motoshop_cart');
             updateCartIconCount();
+            // Lưu thông báo để hiện ở trang chủ
+            sessionStorage.setItem('motoshop_order_success', `Cảm ơn ${name}! Đơn hàng #${data.order_code || data.order_id} đã được tiếp nhận.`);
             window.location.href = "index.html"; 
         } else {
-            alert("Đã xảy ra lỗi hệ thống: " + data.message);
+            showToast("Đã xảy ra lỗi: " + data.message, 'error');
             btn.disabled = false;
             btn.innerHTML = 'Xác Nhận Đặt Hàng';
         }
     } catch (err) {
-        alert("Lỗi kết nối tới Server. Hãy chắc chắn Server PHP đang chạy!");
+        showToast("Lỗi kết nối tới Server. Hãy chắc chắn XAMPP đang chạy!", 'error');
         btn.disabled = false;
         btn.innerHTML = 'Xác Nhận Đặt Hàng';
     }
@@ -532,8 +831,8 @@ function initUserAuth() {
                         <div class="user-phone">${user.phone || user.email || ''}</div>
                         ${user.address ? `<div class="user-phone" style="margin-top:4px;"><i class="fas fa-map-marker-alt me-1" style="font-size:0.7rem;"></i>${user.address}</div>` : ''}
                     </div>
-                    <a href="#"><i class="fas fa-user"></i> Tài khoản</a>
-                    <a href="#"><i class="fas fa-box"></i> Đơn hàng</a>
+                    <a href="profile.html"><i class="fas fa-user"></i> Tài khoản</a>
+                    <a href="my-orders.html"><i class="fas fa-box"></i> Đơn hàng</a>
                     ${(user.role === 'admin' || user.role === 'staff') ? '<a href="admin/index.html"><i class="fas fa-cogs"></i> Quản lý Admin</a>' : ''}
                     <div class="divider"></div>
                     <button class="logout-btn" onclick="logoutUser()"><i class="fas fa-sign-out-alt"></i> Đăng xuất</button>

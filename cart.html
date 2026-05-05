@@ -64,6 +64,31 @@
                         <span class="text-muted">Phí vận chuyển</span>
                         <span class="text-success fw-medium">Miễn phí (Nội thành HN)</span>
                     </div>
+
+                    <!-- Mã giảm giá -->
+                    <div class="mb-3 border-bottom pb-3" id="coupon-section">
+                        <label class="form-label small text-muted fw-bold"><i class="fas fa-ticket-alt me-1"></i>Mã Giảm Giá</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control text-uppercase" id="coupon-input" placeholder="Nhập mã giảm giá..." style="letter-spacing: 1px;">
+                            <button class="btn btn-outline-dark" type="button" id="btn-apply-coupon" onclick="applyCoupon()">Áp dụng</button>
+                        </div>
+                        <div id="coupon-message" class="small mt-2" style="display:none;"></div>
+                        <div id="coupon-applied" class="d-none mt-2 p-2 rounded" style="background:#d1fae5;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="text-success fw-bold small" id="coupon-code-display"></span>
+                                    <span class="text-muted small ms-1" id="coupon-desc-display"></span>
+                                </div>
+                                <button class="btn btn-sm text-danger p-0" onclick="removeCoupon()" title="Xóa mã"><i class="fas fa-times"></i></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Giảm giá -->
+                    <div class="d-flex justify-content-between mb-2 d-none" id="discount-row">
+                        <span class="text-muted">Giảm giá</span>
+                        <span class="fw-bold text-success" id="cart-discount">- 0 ₫</span>
+                    </div>
                     
                     <div class="d-flex justify-content-between mb-4">
                         <span class="fw-bold fs-5">Thành tiền</span>
@@ -104,6 +129,8 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/shared/moto-shared.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/main-bootstrap.js"></script>
 </body>
 </html>

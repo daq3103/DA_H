@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Mã Giảm Giá - MotoShop Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body class="admin-body">
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar -->
+    <aside class="admin-sidebar" id="adminSidebar">
+        <a href="index.html" class="sidebar-brand">
+            <i class="fas fa-motorcycle"></i>
+            <div><span>MotoShop</span><small>Admin Panel</small></div>
+        </a>
+        <ul class="sidebar-nav">
+            <li class="nav-label">Tổng quan</li>
+            <li><a href="index.html"><i class="fas fa-th-large"></i> Dashboard</a></li>
+            <li class="nav-label">Quản lý</li>
+            <li><a href="products.html"><i class="fas fa-motorcycle"></i> Sản phẩm</a></li>
+            <li><a href="orders.html"><i class="fas fa-shopping-bag"></i> Đơn hàng</a></li>
+            <li><a href="customers.html"><i class="fas fa-users"></i> Khách hàng</a></li>
+            <li><a href="coupons.html" class="active"><i class="fas fa-ticket-alt"></i> Mã giảm giá</a></li>
+            <li class="nav-label">Nội dung</li>
+            <li><a href="news.html"><i class="fas fa-newspaper"></i> Tin tức</a></li>
+            <li><a href="contacts.html"><i class="fas fa-envelope"></i> Liên hệ</a></li>
+            <li class="nav-label">Hệ thống</li>
+            <li><a href="../index.html" target="_blank"><i class="fas fa-external-link-alt"></i> Xem Website</a></li>
+            <li><a href="#" onclick="adminLogout()" class="text-danger"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a></li>
+        </ul>
+    </aside>
+
+    <!-- Main -->
+    <div class="admin-main">
+        <div class="admin-topbar">
+            <div class="topbar-left">
+                <button class="btn-sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                <div>
+                    <h5>Quản Lý Mã Giảm Giá</h5>
+                    <span class="breadcrumb-text">Dashboard / Mã giảm giá</span>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <div class="d-none d-md-block text-end">
+                    <div class="admin-name" id="topbar-admin-name">Admin</div>
+                    <div class="admin-role">Quản trị viên</div>
+                </div>
+                <div class="admin-avatar" id="topbar-avatar">A</div>
+                <button class="btn-logout" onclick="adminLogout()"><i class="fas fa-sign-out-alt me-1"></i> Thoát</button>
+            </div>
+        </div>
+
+        <div class="admin-content">
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <h6 class="mb-0"><i class="fas fa-ticket-alt me-2 text-warning"></i>Danh Sách Mã Giảm Giá</h6>
+                    </div>
+                    <button class="btn-admin-primary" data-bs-toggle="modal" data-bs-target="#couponModal" onclick="openAddCoupon()">
+                        <i class="fas fa-plus"></i> Tạo Mã Mới
+                    </button>
+                </div>
+                <div class="admin-card-body" style="overflow-x: auto;">
+                    <table class="admin-table" id="coupons-table">
+                        <thead>
+                            <tr>
+                                <th>Mã</th>
+                                <th>Mô tả</th>
+                                <th>Loại</th>
+                                <th>Giá trị</th>
+                                <th>Đơn tối thiểu</th>
+                                <th>Đã dùng</th>
+                                <th>Hết hạn</th>
+                                <th>Trạng thái</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="coupons-tbody">
+                            <tr><td colspan="9" class="text-center text-muted py-4">Đang tải...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Coupon Modal -->
+    <div class="modal fade" id="couponModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="couponModalTitle">Tạo Mã Giảm Giá</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="couponForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="cpn_id">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Mã giảm giá <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control text-uppercase" id="cpn_code" required placeholder="VD: SUMMER2026" style="letter-spacing:1px;">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Trạng thái</label>
+                                <select class="form-select" id="cpn_status">
+                                    <option value="active">Đang hoạt động</option>
+                                    <option value="inactive">Vô hiệu hóa</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Mô tả</label>
+                                <input type="text" class="form-control" id="cpn_desc" placeholder="VD: Giảm 10% cho khách hàng mới">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Loại giảm giá <span class="text-danger">*</span></label>
+                                <select class="form-select" id="cpn_type" required onchange="toggleCouponFields()">
+                                    <option value="percent">Giảm theo %</option>
+                                    <option value="fixed">Giảm số tiền cố định (VNĐ)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" id="cpn_value_label">Giá trị (%) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="cpn_value" required placeholder="VD: 10">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Đơn hàng tối thiểu (VNĐ)</label>
+                                <input type="number" class="form-control" id="cpn_min_order" value="0" placeholder="0 = không giới hạn">
+                            </div>
+                            <div class="col-md-4" id="cpn_max_discount_group">
+                                <label class="form-label">Giảm tối đa (VNĐ)</label>
+                                <input type="number" class="form-control" id="cpn_max_discount" placeholder="Để trống = không giới hạn">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Số lượt dùng tối đa</label>
+                                <input type="number" class="form-control" id="cpn_max_uses" placeholder="Để trống = vô hạn">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Bắt đầu từ</label>
+                                <input type="datetime-local" class="form-control" id="cpn_starts">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Hết hạn lúc</label>
+                                <input type="datetime-local" class="form-control" id="cpn_expires">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-admin-outline" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn-admin-primary">
+                            <i class="fas fa-save"></i> Lưu Mã
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/shared/moto-shared.js"></script>
+    <script src="../js/admin.js"></script>
+    <script src="../js/admin-coupons.js"></script>
+    <script src="../js/admin-bootstrap.js"></script>
+</body>
+</html>

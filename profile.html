@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tài Khoản - MotoShop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-light">
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm py-3">
+        <div class="container">
+            <a class="navbar-brand fw-bold fs-3 text-primary-moto d-flex align-items-center" href="index.html">
+                <i class="fas fa-motorcycle me-2"></i> MotoShop
+            </a>
+            <div class="d-flex align-items-center gap-3">
+                <a href="cart.html" class="position-relative text-dark fs-5 head-icon-btn d-flex align-items-center justify-content-center">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem;">0</span>
+                </a>
+                <div id="user-auth-area" class="position-relative"></div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Content -->
+    <div class="container profile-page">
+        <div class="row g-4">
+            <!-- Sidebar -->
+            <div class="col-lg-3">
+                <div class="profile-sidebar mb-3">
+                    <div class="profile-avatar" id="profile-avatar">U</div>
+                    <h5 class="fw-bold mb-1" id="profile-name">--</h5>
+                    <p class="text-muted small mb-0" id="profile-role">Khách hàng</p>
+                </div>
+                <div class="profile-menu">
+                    <a href="profile.html" class="active"><i class="fas fa-user"></i> Thông tin cá nhân</a>
+                    <a href="my-orders.html"><i class="fas fa-box"></i> Đơn hàng của tôi</a>
+                    <a href="index.html"><i class="fas fa-home"></i> Về trang chủ</a>
+                    <a href="#" onclick="logoutUser()" class="text-danger"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-lg-9">
+                <!-- Thông tin cá nhân -->
+                <div class="profile-card">
+                    <h5><i class="fas fa-user-edit me-2 text-primary-moto"></i>Thông Tin Cá Nhân</h5>
+                    <form id="profileForm">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">Họ và Tên *</label>
+                                <input type="text" class="form-control" id="pf_name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">Số Điện Thoại *</label>
+                                <input type="tel" class="form-control" id="pf_phone" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">Email</label>
+                                <input type="email" class="form-control" id="pf_email">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">Địa Chỉ</label>
+                                <input type="text" class="form-control" id="pf_address">
+                            </div>
+                            <div class="col-12 text-end">
+                                <button type="submit" class="btn btn-moto-primary rounded-pill px-4" id="btn-save-profile">
+                                    <i class="fas fa-save me-2"></i>Lưu Thay Đổi
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Đổi mật khẩu -->
+                <div class="profile-card">
+                    <h5><i class="fas fa-lock me-2 text-primary-moto"></i>Đổi Mật Khẩu</h5>
+                    <form id="passwordForm">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted">Mật khẩu hiện tại *</label>
+                                <input type="password" class="form-control" id="pw_old" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted">Mật khẩu mới *</label>
+                                <input type="password" class="form-control" id="pw_new" required minlength="6">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted">Xác nhận mật khẩu mới *</label>
+                                <input type="password" class="form-control" id="pw_confirm" required>
+                            </div>
+                            <div class="col-12 text-end">
+                                <button type="submit" class="btn btn-outline-dark rounded-pill px-4" id="btn-change-pw">
+                                    <i class="fas fa-key me-2"></i>Đổi Mật Khẩu
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/shared/moto-shared.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/main-bootstrap.js"></script>
+    <script>
+        // Redirect nếu chưa đăng nhập
+        const userData = localStorage.getItem('motoshop_user');
+        if (!userData) { window.location.href = 'login.html'; }
+
+        const user = JSON.parse(userData);
+
+        // Fill thông tin
+        document.getElementById('profile-avatar').textContent = user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U';
+        document.getElementById('profile-name').textContent = user.full_name;
+        document.getElementById('profile-role').textContent = user.role === 'admin' ? 'Quản trị viên' : 'Khách hàng';
+        document.getElementById('pf_name').value = user.full_name || '';
+        document.getElementById('pf_phone').value = user.phone || '';
+        document.getElementById('pf_email').value = user.email || '';
+        document.getElementById('pf_address').value = user.address || '';
+
+        // Cập nhật profile
+        document.getElementById('profileForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-save-profile');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang lưu...';
+
+            try {
+                const res = await fetch('api/user_profile.php?action=update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: user.id,
+                        full_name: document.getElementById('pf_name').value.trim(),
+                        phone: document.getElementById('pf_phone').value.trim(),
+                        email: document.getElementById('pf_email').value.trim(),
+                        address: document.getElementById('pf_address').value.trim()
+                    })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    // Cập nhật localStorage
+                    localStorage.setItem('motoshop_user', JSON.stringify(data.user));
+                    document.getElementById('profile-avatar').textContent = data.user.full_name.charAt(0).toUpperCase();
+                    document.getElementById('profile-name').textContent = data.user.full_name;
+                    showToast('Cập nhật thông tin thành công!', 'success');
+                } else {
+                    showToast(data.message, 'error');
+                }
+            } catch (err) {
+                showToast('Lỗi kết nối Server!', 'error');
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save me-2"></i>Lưu Thay Đổi';
+        });
+
+        // Đổi mật khẩu
+        document.getElementById('passwordForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const newPw = document.getElementById('pw_new').value;
+            const confirmPw = document.getElementById('pw_confirm').value;
+
+            if (newPw !== confirmPw) {
+                showToast('Mật khẩu xác nhận không khớp!', 'error');
+                return;
+            }
+            if (newPw.length < 6) {
+                showToast('Mật khẩu mới phải có ít nhất 6 ký tự!', 'warning');
+                return;
+            }
+
+            const btn = document.getElementById('btn-change-pw');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang xử lý...';
+
+            try {
+                const res = await fetch('api/user_profile.php?action=change_password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: user.id,
+                        old_password: document.getElementById('pw_old').value,
+                        new_password: newPw
+                    })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    showToast('Đổi mật khẩu thành công!', 'success');
+                    this.reset();
+                } else {
+                    showToast(data.message, 'error');
+                }
+            } catch (err) {
+                showToast('Lỗi kết nối Server!', 'error');
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-key me-2"></i>Đổi Mật Khẩu';
+        });
+    </script>
+</body>
+</html>
