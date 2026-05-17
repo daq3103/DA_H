@@ -81,6 +81,8 @@
             'cancelled': { text: 'Đã hủy', class: 'status-cancelled' }
         };
 
+        let userOrdersList = [];
+
         async function loadOrders() {
             const container = document.getElementById('orders-container');
             try {
@@ -90,6 +92,7 @@
                     body: JSON.stringify({ user_id: user.id })
                 });
                 const data = await res.json();
+                userOrdersList = data.orders || [];
 
                 if (!data.success || !data.orders || data.orders.length === 0) {
                     container.innerHTML = `
@@ -140,6 +143,11 @@
                                         <div class="fw-bold fs-5 text-primary-moto">${formatCurrency(order.total_amount)}</div>
                                     </div>
                                 </div>
+                                <div class="mt-3 text-end">
+                                    <button class="btn btn-sm btn-outline-primary rounded-pill" onclick="printCustomerInvoice(${order.id})">
+                                        <i class="fas fa-print me-1"></i> In hóa đơn
+                                    </button>
+                                </div>
                             </div>
                         </div>`;
                 }).join('');
@@ -147,6 +155,107 @@
             } catch (err) {
                 container.innerHTML = `<div class="text-center py-5 text-danger"><h6>Lỗi kết nối Server!</h6></div>`;
             }
+        }
+
+        function printCustomerInvoice(orderId) {
+            const o = userOrdersList.find(x => x.id === orderId);
+            if (!o) return;
+            
+            const date = new Date(o.created_at).toLocaleDateString('vi-VN', {
+                day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+
+            let printWindow = window.open('', '_blank');
+            let itemsHtml = (o.items || []).map(i => `
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #ddd;">${i.name || 'Sản phẩm'}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${i.quantity}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${formatCurrency(i.unit_price)}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${formatCurrency(i.quantity * i.unit_price)}</td>
+                </tr>
+            `).join('');
+
+            let html = `
+                <!DOCTYPE html>
+                <html lang="vi">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Hóa Đơn #${o.order_code}</title>
+                    <style>
+                        body { font-family: 'Arial', sans-serif; padding: 40px; color: #333; line-height: 1.6; max-width: 800px; margin: 0 auto; }
+                        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 20px; }
+                        .header h1 { margin: 0; font-size: 28px; text-transform: uppercase; }
+                        .header p { margin: 5px 0 0; color: #666; }
+                        .info-section { display: flex; justify-content: space-between; margin-bottom: 30px; }
+                        .info-box { width: 48%; }
+                        .info-box h3 { border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 10px; font-size: 16px; text-transform: uppercase; }
+                        .info-box p { margin: 5px 0; font-size: 14px; }
+                        table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+                        th { background-color: #f8f9fa; padding: 10px 8px; border: 1px solid #ddd; text-align: left; font-size: 14px; }
+                        .total-section { text-align: right; margin-top: 20px; font-size: 18px; }
+                        .total-section strong { font-size: 22px; color: #d9534f; }
+                        .footer { text-align: center; margin-top: 50px; font-size: 14px; color: #777; border-top: 1px solid #eee; padding-top: 20px; }
+                        @media print {
+                            body { padding: 0; max-width: 100%; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>HÓA ĐƠN MUA HÀNG</h1>
+                        <p>MotoShop - Cửa hàng xe máy chính hãng</p>
+                    </div>
+                    
+                    <div class="info-section">
+                        <div class="info-box">
+                            <h3>Thông tin người nhận</h3>
+                            <p><strong>Khách hàng:</strong> ${user.full_name}</p>
+                            <p><strong>SĐT:</strong> ${user.phone || '—'}</p>
+                            <p><strong>Địa chỉ giao hàng:</strong> ${o.shipping_address || '—'}</p>
+                        </div>
+                        <div class="info-box">
+                            <h3>Chi tiết đơn hàng</h3>
+                            <p><strong>Mã Đơn:</strong> #${o.order_code}</p>
+                            <p><strong>Ngày đặt:</strong> ${date}</p>
+                            <p><strong>Phương thức:</strong> COD</p>
+                        </div>
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Sản phẩm</th>
+                                <th style="text-align: center; width: 100px;">Số lượng</th>
+                                <th style="text-align: right; width: 150px;">Đơn giá</th>
+                                <th style="text-align: right; width: 150px;">Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsHtml}
+                        </tbody>
+                    </table>
+
+                    <div class="total-section">
+                        <p>Tổng thanh toán: <strong>${formatCurrency(o.total_amount)}</strong></p>
+                    </div>
+
+                    <div class="footer">
+                        <p>Cảm ơn quý khách đã tin tưởng và mua sắm tại MotoShop!</p>
+                        <p>Mọi thắc mắc xin liên hệ Hotline: 1900 xxxx</p>
+                    </div>
+                    
+                    <script>
+                        window.onload = function() {
+                            window.print();
+                        }
+                    <\/script>
+                </body>
+                </html>
+            `;
+            
+            printWindow.document.open();
+            printWindow.document.write(html);
+            printWindow.document.close();
         }
 
         loadOrders();

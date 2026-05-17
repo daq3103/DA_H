@@ -38,6 +38,18 @@ switch ($action) {
             exit;
         }
 
+        // Validate số điện thoại (chỉ chứa chữ số và độ dài 10-11)
+        if (!preg_match('/^[0-9]{10,11}$/', $phone)) {
+            echo json_encode(['success' => false, 'message' => 'Số điện thoại không hợp lệ']);
+            exit;
+        }
+
+        // Validate định dạng Email nếu có nhập
+        if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            echo json_encode(['success' => false, 'message' => 'Định dạng Email không hợp lệ']);
+            exit;
+        }
+
         // Kiểm tra SĐT đã tồn tại
         try {
             $stmt = $pdo->prepare("SELECT id FROM users WHERE phone = ?");

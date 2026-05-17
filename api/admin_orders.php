@@ -43,8 +43,48 @@ try {
 
         case 'PUT':
             $data = json_decode(file_get_contents('php://input'), true);
+            $newStatus = $data['status'];
+            $orderId = $data['id'];
+
+            // Lấy trạng thái hiện tại của đơn hàng
+            $stmtOldStatus = $pdo->prepare("SELECT status FROM orders WHERE id = ?");
+            $stmtOldStatus->execute([$orderId]);
+            $oldOrder = $stmtOldStatus->fetch();
+
+            if ($oldOrder) {
+                $oldStatus = $oldOrder['status'];
+
+                // Nếu chuyển từ trạng thái KHÁC sang CANCELLED -> Hoàn kho
+                if ($oldStatus !== 'cancelled' && $newStatus === 'cancelled') {
+                    $stmtItems = $pdo->prepare("SELECT product_id, quantity FROM order_items WHERE order_id = ?");
+                    $stmtItems->execute([$orderId]);
+                    $items = $stmtItems->fetchAll();
+
+                    $stmtUpdateStock = $pdo->prepare("UPDATE products SET stock_quantity = stock_quantity + ? WHERE id = ?");
+                    foreach ($items as $item) {
+                        if ($item['product_id']) {
+                            $stmtUpdateStock->execute([$item['quantity'], $item['product_id']]);
+                        }
+                    }
+                }
+                
+                // Nếu chuyển từ CANCELLED sang trạng thái KHÁC (khôi phục đơn) -> Trừ lại kho
+                if ($oldStatus === 'cancelled' && $newStatus !== 'cancelled') {
+                    $stmtItems = $pdo->prepare("SELECT product_id, quantity FROM order_items WHERE order_id = ?");
+                    $stmtItems->execute([$orderId]);
+                    $items = $stmtItems->fetchAll();
+
+                    $stmtUpdateStock = $pdo->prepare("UPDATE products SET stock_quantity = stock_quantity - ? WHERE id = ?");
+                    foreach ($items as $item) {
+                        if ($item['product_id']) {
+                            $stmtUpdateStock->execute([$item['quantity'], $item['product_id']]);
+                        }
+                    }
+                }
+            }
+
             $stmt = $pdo->prepare("UPDATE orders SET status = ? WHERE id = ?");
-            $stmt->execute([$data['status'], $data['id']]);
+            $stmt->execute([$newStatus, $orderId]);
             echo json_encode(['success' => true]);
             break;
     }

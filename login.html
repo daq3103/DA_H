@@ -125,6 +125,11 @@
 
                 if (data.success) {
                     localStorage.setItem('motoshop_user', JSON.stringify(data.user));
+                    // Nếu là admin hoặc staff thì phải lưu thêm session của admin
+                    if (data.user.role === 'admin' || data.user.role === 'staff') {
+                        localStorage.setItem('motoshop_admin', JSON.stringify(data.user));
+                    }
+                    
                     // Admin/staff → chuyển tới trang quản trị, customer → trang chủ
                     const defaultRedirect = (data.user.role === 'admin' || data.user.role === 'staff') ? 'admin/index.html' : 'index.html';
                     const redirect = urlParams.get('redirect') || defaultRedirect;

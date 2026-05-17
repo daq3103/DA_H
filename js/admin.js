@@ -4,13 +4,22 @@
  */
 
 const API_BASE = '../api/';
-const { formatCurrency, formatDateVN: formatDate, fixImageUrlForAdmin: fixImageUrl } = window.MotoShared || {};
+const { formatCurrency, formatDateVN: formatDate, fixImageUrlForAdmin: fixImageUrl, escapeHTML } = window.MotoShared || {};
 const el = (id) => document.getElementById(id);
 const onReady = (callback) => document.addEventListener('DOMContentLoaded', callback);
+const ADMIN_API_URLS = {
+    stats: API_BASE + 'admin_stats.php',
+    products: API_BASE + 'admin_products.php',
+    uploadImage: API_BASE + 'upload_image.php',
+    customers: API_BASE + 'admin_customers.php',
+    news: API_BASE + 'admin_news.php',
+    contacts: API_BASE + 'admin_contacts.php'
+};
 if (
     typeof formatCurrency !== 'function' ||
     typeof formatDate !== 'function' ||
-    typeof fixImageUrl !== 'function'
+    typeof fixImageUrl !== 'function' ||
+    typeof escapeHTML !== 'function'
 ) {
     throw new Error('MotoShared chưa được tải. Vui lòng include ../js/shared/moto-shared.js trước ../js/admin.js');
 }
@@ -82,6 +91,41 @@ let adminProducts = [];
 let adminCustomers = [];
 let adminNews = [];
 let adminContacts = [];
+const PRODUCT_BRAND_MAP = { '1': 'Honda', '2': 'Yamaha', '3': 'Ducati', '4': 'Suzuki', '5': 'Kawasaki' };
+const PRODUCT_CATEGORY_MAP = { '1': 'Xe Tay Ga', '2': 'Xe Số', '3': 'Xe Côn Tay', '4': 'Phân Khối Lớn' };
+
+function setTextIfExists(id, value) {
+    const element = document.getElementById(id);
+    if (element) element.textContent = value;
+}
+
+function getInputValue(id) {
+    const input = document.getElementById(id);
+    return input ? input.value : '';
+}
+
+function getInputChecked(id) {
+    const input = document.getElementById(id);
+    return input ? input.checked : false;
+}
+
+function parseInteger(value, fallback = null) {
+    const parsed = parseInt(value, 10);
+    return Number.isNaN(parsed) ? fallback : parsed;
+}
+
+function parseNumber(value, fallback = 0) {
+    const parsed = parseFloat(value);
+    return Number.isNaN(parsed) ? fallback : parsed;
+}
+
+function slugify(value) {
+    return (value || '').toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
+}
+
+function getNextEntityId(collection) {
+    return collection.length > 0 ? Math.max(...collection.map(item => item.id)) + 1 : 1;
+}
 
 function getCurrentPage() {
     const path = window.location.pathname;
@@ -97,26 +141,24 @@ function getCurrentPage() {
 // =================== DASHBOARD ===================
 async function loadDashboard() {
     try {
-        const res = await fetch(API_BASE + 'admin_stats.php');
+        const res = await fetch(ADMIN_API_URLS.stats);
         const data = await res.json();
         if (!data.error) {
-            document.getElementById('stat-products').textContent = data.total_products || 0;
-            document.getElementById('stat-orders').textContent = data.total_orders || 0;
-            document.getElementById('stat-customers').textContent = data.total_customers || 0;
-            document.getElementById('stat-revenue').textContent = formatCurrency(data.total_revenue || 0);
-            document.getElementById('stat-pending-orders').textContent = data.pending_orders || 0;
-            document.getElementById('stat-completed-orders').textContent = data.completed_orders || 0;
-            document.getElementById('stat-unread-contacts').textContent = data.unread_contacts || 0;
-            document.getElementById('stat-news-count').textContent = data.total_news || 0;
+            setTextIfExists('stat-products', data.total_products || 0);
+            setTextIfExists('stat-orders', data.total_orders || 0);
+            setTextIfExists('stat-customers', data.total_customers || 0);
+            setTextIfExists('stat-revenue', formatCurrency(data.total_revenue || 0));
+            setTextIfExists('stat-pending-orders', data.pending_orders || 0);
+            setTextIfExists('stat-completed-orders', data.completed_orders || 0);
+            setTextIfExists('stat-unread-contacts', data.unread_contacts || 0);
+            setTextIfExists('stat-news-count', data.total_news || 0);
 
             if (data.recent_orders) renderRecentOrders(data.recent_orders);
             if (data.recent_contacts) renderRecentContacts(data.recent_contacts);
 
             // Update sidebar badges
-            const oc = document.getElementById('sidebar-order-count');
-            const cc = document.getElementById('sidebar-contact-count');
-            if (oc) oc.textContent = data.pending_orders || 0;
-            if (cc) cc.textContent = data.unread_contacts || 0;
+            setTextIfExists('sidebar-order-count', data.pending_orders || 0);
+            setTextIfExists('sidebar-contact-count', data.unread_contacts || 0);
         }
     } catch (err) {
         // Use demo data
@@ -125,24 +167,22 @@ async function loadDashboard() {
 }
 
 function loadDashboardDemo() {
-    document.getElementById('stat-products').textContent = DEMO_PRODUCTS.length;
-    document.getElementById('stat-orders').textContent = DEMO_ORDERS.length;
-    document.getElementById('stat-customers').textContent = DEMO_CUSTOMERS.length;
+    setTextIfExists('stat-products', DEMO_PRODUCTS.length);
+    setTextIfExists('stat-orders', DEMO_ORDERS.length);
+    setTextIfExists('stat-customers', DEMO_CUSTOMERS.length);
 
     const totalRevenue = DEMO_ORDERS.filter(o => o.status === 'completed').reduce((s, o) => s + o.total_amount, 0);
-    document.getElementById('stat-revenue').textContent = formatCurrency(totalRevenue);
+    setTextIfExists('stat-revenue', formatCurrency(totalRevenue));
 
     const pending = DEMO_ORDERS.filter(o => o.status === 'pending').length;
     const completed = DEMO_ORDERS.filter(o => o.status === 'completed').length;
-    document.getElementById('stat-pending-orders').textContent = pending;
-    document.getElementById('stat-completed-orders').textContent = completed;
-    document.getElementById('stat-unread-contacts').textContent = DEMO_CONTACTS.filter(c => c.status === 'unread').length;
-    document.getElementById('stat-news-count').textContent = DEMO_NEWS.length;
+    setTextIfExists('stat-pending-orders', pending);
+    setTextIfExists('stat-completed-orders', completed);
+    setTextIfExists('stat-unread-contacts', DEMO_CONTACTS.filter(c => c.status === 'unread').length);
+    setTextIfExists('stat-news-count', DEMO_NEWS.length);
 
-    const oc = document.getElementById('sidebar-order-count');
-    const cc = document.getElementById('sidebar-contact-count');
-    if (oc) oc.textContent = pending;
-    if (cc) cc.textContent = DEMO_CONTACTS.filter(c => c.status === 'unread').length;
+    setTextIfExists('sidebar-order-count', pending);
+    setTextIfExists('sidebar-contact-count', DEMO_CONTACTS.filter(c => c.status === 'unread').length);
 
     renderRecentOrders(DEMO_ORDERS.slice(0, 5));
     renderRecentContacts(DEMO_CONTACTS.filter(c => c.status === 'unread').slice(0, 3));
@@ -158,7 +198,7 @@ function renderRecentOrders(orders) {
     tbody.innerHTML = orders.map(o => `
         <tr>
             <td><strong>#${o.id}</strong></td>
-            <td>${o.customer_name || 'N/A'}</td>
+            <td>${escapeHTML(o.customer_name || 'N/A')}</td>
             <td class="fw-bold">${formatCurrency(o.total_amount)}</td>
             <td><span class="status-badge ${o.status}">${getStatusText(o.status)}</span></td>
             <td class="text-muted">${formatDate(o.order_date)}</td>
@@ -176,11 +216,11 @@ function renderRecentContacts(contacts) {
     container.innerHTML = contacts.map(c => `
         <div class="d-flex gap-3 align-items-start mb-3 pb-3 border-bottom">
             <div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0;">
-                ${c.full_name.charAt(0)}
+                ${escapeHTML(c.full_name).charAt(0)}
             </div>
             <div>
-                <div style="font-size:0.85rem;font-weight:600;color:#0f1535;">${c.full_name}</div>
-                <div style="font-size:0.78rem;color:var(--admin-text-muted);margin-top:2px;" class="text-truncate" title="${c.message}">${c.message.substring(0, 60)}...</div>
+                <div style="font-size:0.85rem;font-weight:600;color:#0f1535;">${escapeHTML(c.full_name)}</div>
+                <div style="font-size:0.78rem;color:var(--admin-text-muted);margin-top:2px;" class="text-truncate" title="${escapeHTML(c.message)}">${escapeHTML(c.message).substring(0, 60)}...</div>
                 <div style="font-size:0.7rem;color:#aaa;margin-top:4px;">${formatDate(c.created_at)}</div>
             </div>
         </div>
@@ -195,7 +235,7 @@ function getStatusText(s) {
 // =================== PRODUCTS ===================
 async function loadProducts() {
     try {
-        const res = await fetch(API_BASE + 'admin_products.php');
+        const res = await fetch(ADMIN_API_URLS.products);
         adminProducts = await res.json();
         if (adminProducts.error) throw new Error(adminProducts.message);
     } catch (err) {
@@ -303,7 +343,7 @@ async function uploadProductImage(input) {
     formData.append('image', file);
 
     try {
-        const res = await fetch(API_BASE + 'upload_image.php', {
+        const res = await fetch(ADMIN_API_URLS.uploadImage, {
             method: 'POST',
             body: formData
         });
@@ -385,7 +425,7 @@ function openEditProduct(id) {
 async function deleteProduct(id) {
     if (!confirm('Bạn có chắc muốn xóa sản phẩm này?')) return;
     try {
-        await fetch(API_BASE + 'admin_products.php', {
+        await fetch(ADMIN_API_URLS.products, {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id })
@@ -395,72 +435,81 @@ async function deleteProduct(id) {
     renderProductsTable(adminProducts);
 }
 
+function getProductFormData() {
+    const idValue = getInputValue('prod_id');
+    const nameValue = getInputValue('prod_name');
+    const brandIdValue = getInputValue('prod_brand');
+    const categoryIdValue = getInputValue('prod_category');
+    const salePriceValue = getInputValue('prod_sale_price');
+
+    return {
+        id: idValue ? parseInteger(idValue) : null,
+        name: nameValue,
+        slug: getInputValue('prod_slug') || slugify(nameValue),
+        brand_id: parseInteger(brandIdValue, 0),
+        brand: PRODUCT_BRAND_MAP[brandIdValue] || '',
+        category_id: parseInteger(categoryIdValue, 0),
+        category: PRODUCT_CATEGORY_MAP[categoryIdValue] || '',
+        price: parseNumber(getInputValue('prod_price')),
+        sale_price: salePriceValue ? parseNumber(salePriceValue) : null,
+        stock_quantity: parseInteger(getInputValue('prod_stock'), 0),
+        image: getInputValue('prod_image'),
+        description: getInputValue('prod_desc'),
+        status: getInputValue('prod_status'),
+        is_new: getInputChecked('prod_is_new'),
+        is_hot: getInputChecked('prod_is_hot'),
+        specs: {
+            engine_type: getInputValue('spec_engine'),
+            displacement: getInputValue('spec_displacement'),
+            max_power: getInputValue('spec_power'),
+            weight: getInputValue('spec_weight'),
+            fuel_consumption: getInputValue('spec_fuel')
+        }
+    };
+}
+
+async function saveProduct(productData) {
+    const method = productData.id ? 'PUT' : 'POST';
+    const res = await fetch(ADMIN_API_URLS.products, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(productData)
+    });
+    return res.json();
+}
+
+function upsertProductLocal(productData) {
+    const index = productData.id ? adminProducts.findIndex(p => p.id === productData.id) : -1;
+    if (index !== -1) {
+        adminProducts[index] = { ...adminProducts[index], ...productData };
+        return;
+    }
+    if (!productData.id) productData.id = getNextEntityId(adminProducts);
+    adminProducts.push(productData);
+}
+
 // Product form submit
 onReady(() => {
     const form = el('productForm');
     if (form) {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const brandMap = { '1':'Honda', '2':'Yamaha', '3':'Ducati', '4':'Suzuki', '5':'Kawasaki' };
-            const catMap = { '1':'Xe Tay Ga', '2':'Xe Số', '3':'Xe Côn Tay', '4':'Phân Khối Lớn' };
-
-            const productData = {
-                id: document.getElementById('prod_id').value ? parseInt(document.getElementById('prod_id').value) : null,
-                name: document.getElementById('prod_name').value,
-                slug: document.getElementById('prod_slug').value || document.getElementById('prod_name').value.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, ''),
-                brand_id: parseInt(document.getElementById('prod_brand').value),
-                brand: brandMap[document.getElementById('prod_brand').value] || '',
-                category_id: parseInt(document.getElementById('prod_category').value),
-                category: catMap[document.getElementById('prod_category').value] || '',
-                price: parseFloat(document.getElementById('prod_price').value),
-                sale_price: document.getElementById('prod_sale_price').value ? parseFloat(document.getElementById('prod_sale_price').value) : null,
-                stock_quantity: parseInt(document.getElementById('prod_stock').value) || 0,
-                image: document.getElementById('prod_image').value,
-                description: document.getElementById('prod_desc').value,
-                status: document.getElementById('prod_status').value,
-                is_new: document.getElementById('prod_is_new').checked,
-                is_hot: document.getElementById('prod_is_hot').checked,
-                specs: {
-                    engine_type: document.getElementById('spec_engine').value,
-                    displacement: document.getElementById('spec_displacement').value,
-                    max_power: document.getElementById('spec_power').value,
-                    weight: document.getElementById('spec_weight').value,
-                    fuel_consumption: document.getElementById('spec_fuel') ? document.getElementById('spec_fuel').value : ''
-                }
-            };
+            const productData = getProductFormData();
 
             let savedToDb = false;
             try {
-                const method = productData.id ? 'PUT' : 'POST';
-                const res = await fetch(API_BASE + 'admin_products.php', {
-                    method,
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(productData)
-                });
-                const result = await res.json();
+                const result = await saveProduct(productData);
                 if (result.error) {
                     alert('Lỗi từ server: ' + result.message);
                     return;
                 }
                 savedToDb = true;
-                // Lấy ID thực từ database cho sản phẩm mới
-                if (!productData.id && result.id) {
-                    productData.id = result.id;
-                }
+                if (!productData.id && result.id) productData.id = result.id;
             } catch (err) {
                 console.warn('Không kết nối được API, chỉ lưu tạm trên giao diện:', err);
             }
 
-            // Update local state
-            if (productData.id && adminProducts.find(p => p.id === productData.id)) {
-                const idx = adminProducts.findIndex(p => p.id === productData.id);
-                if (idx !== -1) adminProducts[idx] = { ...adminProducts[idx], ...productData };
-            } else {
-                if (!productData.id) {
-                    productData.id = adminProducts.length > 0 ? Math.max(...adminProducts.map(p => p.id)) + 1 : 1;
-                }
-                adminProducts.push(productData);
-            }
+            upsertProductLocal(productData);
 
             renderProductsTable(adminProducts);
             bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
@@ -472,7 +521,7 @@ onReady(() => {
 // =================== CUSTOMERS ===================
 async function loadCustomers() {
     try {
-        const res = await fetch(API_BASE + 'admin_customers.php');
+        const res = await fetch(ADMIN_API_URLS.customers);
         adminCustomers = await res.json();
         if (adminCustomers.error) throw new Error();
     } catch (err) {
@@ -491,10 +540,10 @@ function renderCustomersTable(customers) {
     tbody.innerHTML = customers.map((c, i) => `
         <tr>
             <td>${i + 1}</td>
-            <td><strong>${c.full_name}</strong></td>
-            <td>${c.phone}</td>
-            <td>${c.email || '—'}</td>
-            <td class="text-truncate" style="max-width:200px;">${c.address || '—'}</td>
+            <td><strong>${escapeHTML(c.full_name)}</strong></td>
+            <td>${escapeHTML(c.phone)}</td>
+            <td>${escapeHTML(c.email || '—')}</td>
+            <td class="text-truncate" style="max-width:200px;">${escapeHTML(c.address || '—')}</td>
             <td><span class="badge bg-primary rounded-pill">${c.order_count || 0}</span></td>
             <td class="text-muted">${formatDate(c.created_at)}</td>
         </tr>
@@ -510,7 +559,7 @@ function filterCustomers() {
 // =================== NEWS ===================
 async function loadNews() {
     try {
-        const res = await fetch(API_BASE + 'admin_news.php');
+        const res = await fetch(ADMIN_API_URLS.news);
         adminNews = await res.json();
         if (adminNews.error) throw new Error();
     } catch (err) {
@@ -565,10 +614,44 @@ function openEditNews(id) {
 async function deleteNews(id) {
     if (!confirm('Bạn có chắc muốn xóa bài viết này?')) return;
     try {
-        await fetch(API_BASE + 'admin_news.php', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+        await fetch(ADMIN_API_URLS.news, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
     } catch (err) { /* demo */ }
     adminNews = adminNews.filter(n => n.id !== id);
     renderNewsTable(adminNews);
+}
+
+function getNewsFormData() {
+    const idValue = getInputValue('news_id');
+    const titleValue = getInputValue('news_title');
+    return {
+        id: idValue ? parseInteger(idValue) : null,
+        title: titleValue,
+        slug: slugify(titleValue),
+        author: getInputValue('news_author'),
+        thumbnail_url: getInputValue('news_thumbnail'),
+        summary: getInputValue('news_summary'),
+        content: getInputValue('news_content'),
+        published_at: new Date().toISOString()
+    };
+}
+
+async function saveNews(newsData) {
+    const method = newsData.id ? 'PUT' : 'POST';
+    await fetch(ADMIN_API_URLS.news, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newsData)
+    });
+}
+
+function upsertNewsLocal(newsData) {
+    const index = newsData.id ? adminNews.findIndex(n => n.id === newsData.id) : -1;
+    if (index !== -1) {
+        adminNews[index] = { ...adminNews[index], ...newsData };
+        return;
+    }
+    if (!newsData.id) newsData.id = getNextEntityId(adminNews);
+    adminNews.push(newsData);
 }
 
 onReady(() => {
@@ -576,29 +659,13 @@ onReady(() => {
     if (form) {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const newsData = {
-                id: document.getElementById('news_id').value ? parseInt(document.getElementById('news_id').value) : null,
-                title: document.getElementById('news_title').value,
-                slug: document.getElementById('news_title').value.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, ''),
-                author: document.getElementById('news_author').value,
-                thumbnail_url: document.getElementById('news_thumbnail').value,
-                summary: document.getElementById('news_summary').value,
-                content: document.getElementById('news_content').value,
-                published_at: new Date().toISOString()
-            };
+            const newsData = getNewsFormData();
 
             try {
-                const method = newsData.id ? 'PUT' : 'POST';
-                await fetch(API_BASE + 'admin_news.php', { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newsData) });
+                await saveNews(newsData);
             } catch (err) { /* demo */ }
 
-            if (newsData.id) {
-                const idx = adminNews.findIndex(n => n.id === newsData.id);
-                if (idx !== -1) adminNews[idx] = { ...adminNews[idx], ...newsData };
-            } else {
-                newsData.id = adminNews.length > 0 ? Math.max(...adminNews.map(n => n.id)) + 1 : 1;
-                adminNews.push(newsData);
-            }
+            upsertNewsLocal(newsData);
             renderNewsTable(adminNews);
             bootstrap.Modal.getInstance(document.getElementById('newsModal')).hide();
             alert('Đã lưu bài viết thành công!');
@@ -609,7 +676,7 @@ onReady(() => {
 // =================== CONTACTS ===================
 async function loadContacts() {
     try {
-        const res = await fetch(API_BASE + 'admin_contacts.php');
+        const res = await fetch(ADMIN_API_URLS.contacts);
         adminContacts = await res.json();
         if (adminContacts.error) throw new Error();
     } catch (err) {
@@ -628,10 +695,10 @@ function renderContactsTable(contacts) {
     tbody.innerHTML = contacts.map((c, i) => `
         <tr>
             <td>${i + 1}</td>
-            <td><strong>${c.full_name}</strong></td>
-            <td>${c.phone}</td>
-            <td>${c.email || '—'}</td>
-            <td class="text-truncate" style="max-width:200px;" title="${c.message}">${c.message.substring(0, 50)}${c.message.length > 50 ? '...' : ''}</td>
+            <td><strong>${escapeHTML(c.full_name)}</strong></td>
+            <td>${escapeHTML(c.phone)}</td>
+            <td>${escapeHTML(c.email || '—')}</td>
+            <td class="text-truncate" style="max-width:200px;" title="${escapeHTML(c.message)}">${escapeHTML(c.message).substring(0, 50)}${c.message.length > 50 ? '...' : ''}</td>
             <td>
                 <select class="form-select form-select-sm" style="width:120px;font-size:0.78rem;border-radius:8px;" onchange="updateContactStatus(${c.id}, this.value)">
                     <option value="unread" ${c.status==='unread'?'selected':''}>Chưa đọc</option>
@@ -655,7 +722,7 @@ function filterContacts() {
 
 async function updateContactStatus(id, newStatus) {
     try {
-        await fetch(API_BASE + 'admin_contacts.php', {
+        await fetch(ADMIN_API_URLS.contacts, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id, status: newStatus })
@@ -671,19 +738,19 @@ function viewContactDetail(id) {
     document.getElementById('contact-detail-body').innerHTML = `
         <div class="mb-3 pb-3 border-bottom">
             <small class="text-muted d-block mb-1">Họ tên</small>
-            <strong>${c.full_name}</strong>
+            <strong>${escapeHTML(c.full_name)}</strong>
         </div>
         <div class="mb-3 pb-3 border-bottom">
             <small class="text-muted d-block mb-1">Số điện thoại</small>
-            <strong>${c.phone}</strong>
+            <strong>${escapeHTML(c.phone)}</strong>
         </div>
         <div class="mb-3 pb-3 border-bottom">
             <small class="text-muted d-block mb-1">Email</small>
-            <strong>${c.email || '—'}</strong>
+            <strong>${escapeHTML(c.email || '—')}</strong>
         </div>
         <div class="mb-3 pb-3 border-bottom">
             <small class="text-muted d-block mb-1">Nội dung tin nhắn</small>
-            <p class="mb-0">${c.message}</p>
+            <p class="mb-0" style="white-space: pre-wrap;">${escapeHTML(c.message)}</p>
         </div>
         <div>
             <small class="text-muted d-block mb-1">Ngày gửi</small>

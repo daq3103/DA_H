@@ -24,44 +24,85 @@ if (!$input) {
 }
 
 try {
-    $pdo->beginTransaction();
+    $phone = trim($input['customer']['phone'] ?? '');
+    $name = trim($input['customer']['name'] ?? '');
+    $address = trim($input['customer']['address'] ?? '');
 
-    // 1. Tìm hoặc tạo user (khách hàng)
-    $phone = $input['customer']['phone'];
-    $name = $input['customer']['name'];
-    $address = $input['customer']['address'];
-
-    $stmtFind = $pdo->prepare("SELECT id FROM users WHERE phone = ?");
-    $stmtFind->execute([$phone]);
-    $existingUser = $stmtFind->fetch();
-
-    if ($existingUser) {
-        $userId = $existingUser['id'];
-    } else {
-        $stmtUser = $pdo->prepare("INSERT INTO users (full_name, phone, address, role) VALUES (?, ?, ?, 'customer')");
-        $stmtUser->execute([$name, $phone, $address]);
-        $userId = $pdo->lastInsertId();
+    // Validate số điện thoại (chỉ chứa chữ số và độ dài 10-11)
+    if (!preg_match('/^[0-9]{10,11}$/', $phone)) {
+        echo json_encode(['success' => false, 'message' => 'Số điện thoại không hợp lệ']);
+        exit;
     }
 
-    // 2. Tính tổng tiền
+    $pdo->beginTransaction();
+
+    // 1. Nhận diện User đặt hàng (Nếu đang đăng nhập thì có user_id, nếu không thì là Guest)
+    $userId = (int)($input['customer']['user_id'] ?? 0);
+    if ($userId <= 0) {
+        $userId = null; // Guest checkout
+    }
+
+    // 2. Kiểm tra tồn kho và tính tổng tiền từ Database
     $totalAmount = 0;
+    $dbProducts = [];
+
     foreach ($input['cart'] as $item) {
-        $p = $item['product'];
-        $price = $p['sale_price'] ? $p['sale_price'] : $p['price'];
-        $totalAmount += $price * $item['quantity'];
+        $pId = (int)$item['product']['id'];
+        $qty = (int)$item['quantity'];
+
+        // Dùng FOR UPDATE để khóa dòng khi đang giao dịch, tránh mua trùng
+        $stmtProd = $pdo->prepare("SELECT id, name, price, sale_price, stock_quantity FROM products WHERE id = ? FOR UPDATE");
+        $stmtProd->execute([$pId]);
+        $realProduct = $stmtProd->fetch();
+
+        if (!$realProduct) {
+            throw new Exception('Sản phẩm không tồn tại (ID: ' . $pId . ')');
+        }
+
+        if ($realProduct['stock_quantity'] < $qty) {
+            throw new Exception('Sản phẩm "' . $realProduct['name'] . '" chỉ còn ' . $realProduct['stock_quantity'] . ' chiếc trong kho.');
+        }
+
+        $realPrice = $realProduct['sale_price'] ? $realProduct['sale_price'] : $realProduct['price'];
+        $totalAmount += $realPrice * $qty;
+
+        // Lưu lại để thêm vào order_items và trừ kho
+        $dbProducts[] = [
+            'id' => $pId,
+            'qty' => $qty,
+            'price' => $realPrice
+        ];
     }
 
     // 2.5. Xử lý mã giảm giá (nếu có)
     $couponCode = $input['coupon_code'] ?? null;
     $discountAmount = (int)($input['discount_amount'] ?? 0);
 
-    if ($couponCode && $discountAmount > 0) {
+    if ($couponCode) {
         // Verify coupon vẫn hợp lệ
         $stmtCoupon = $pdo->prepare("SELECT * FROM coupons WHERE code = ? AND status = 'active'");
         $stmtCoupon->execute([$couponCode]);
         $coupon = $stmtCoupon->fetch();
 
         if ($coupon) {
+            // Kiểm tra thời hạn
+            if ($coupon['starts_at'] && strtotime($coupon['starts_at']) > time()) {
+                throw new Exception('Mã giảm giá chưa bắt đầu hiệu lực');
+            }
+            if ($coupon['expires_at'] && strtotime($coupon['expires_at']) < time()) {
+                throw new Exception('Mã giảm giá đã hết hạn');
+            }
+
+            // Kiểm tra số lần sử dụng
+            if ($coupon['max_uses'] !== null && $coupon['used_count'] >= $coupon['max_uses']) {
+                throw new Exception('Mã giảm giá đã hết lượt sử dụng');
+            }
+
+            // Kiểm tra đơn tối thiểu
+            if ($totalAmount < $coupon['min_order_amount']) {
+                throw new Exception('Đơn hàng không đủ điều kiện tối thiểu để áp dụng mã giảm giá này');
+            }
+
             // Tính lại discount server-side để đảm bảo chính xác
             $serverDiscount = 0;
             if ($coupon['discount_type'] === 'percent') {
@@ -102,12 +143,16 @@ try {
     ]);
     $orderId = $pdo->lastInsertId();
 
-    // 5. Lưu chi tiết từng sản phẩm
+    // 5. Lưu chi tiết từng sản phẩm và Trừ tồn kho
     $stmtItem = $pdo->prepare("INSERT INTO order_items (order_id, product_id, quantity, unit_price) VALUES (?, ?, ?, ?)");
-    foreach ($input['cart'] as $item) {
-        $p = $item['product'];
-        $price = $p['sale_price'] ? $p['sale_price'] : $p['price'];
-        $stmtItem->execute([$orderId, $p['id'], $item['quantity'], $price]);
+    $stmtUpdateStock = $pdo->prepare("UPDATE products SET stock_quantity = stock_quantity - ? WHERE id = ?");
+
+    foreach ($dbProducts as $item) {
+        // Lưu order_items
+        $stmtItem->execute([$orderId, $item['id'], $item['qty'], $item['price']]);
+
+        // Trừ số lượng tồn kho
+        $stmtUpdateStock->execute([$item['qty'], $item['id']]);
     }
 
     $pdo->commit();

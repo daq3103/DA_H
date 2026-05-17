@@ -456,10 +456,14 @@ function renderProductDetail() {
             </div>
             
             <div class="d-flex flex-column flex-sm-row gap-3 mt-4 pt-2">
-                <button class="btn btn-outline-dark btn-lg rounded-pill px-4 fw-bold" onclick="addCurrentToCart(${product.id})">
-                    <i class="fas fa-cart-plus me-2"></i> THÊM VÀO GIỎ
-                </button>
-                <button class="btn btn-moto-primary btn-lg rounded-pill flex-grow-1 fw-bold fs-5 shadow" onclick="buyNow(${product.id})">MUA NGAY</button>
+                ${product.stock_quantity <= 0 ? 
+                    `<button class="btn btn-secondary btn-lg rounded-pill w-100 fw-bold fs-5" disabled>ĐÃ HẾT HÀNG</button>` 
+                    : 
+                    `<button class="btn btn-outline-dark btn-lg rounded-pill px-4 fw-bold" onclick="addCurrentToCart(${product.id})">
+                        <i class="fas fa-cart-plus me-2"></i> THÊM VÀO GIỎ
+                    </button>
+                    <button class="btn btn-moto-primary btn-lg rounded-pill flex-grow-1 fw-bold fs-5 shadow" onclick="buyNow(${product.id})">MUA NGAY</button>`
+                }
             </div>
         </div>
     `;
@@ -505,15 +509,22 @@ function createProductCardHTML(product) {
         badges += `<span class="badge bg-danger shadow-sm mt-1">-${percent}%</span>`;
     }
 
+    const outOfStock = product.stock_quantity <= 0;
+    const desktopCartBtn = outOfStock ? 
+        `<button class="action-btn" disabled style="opacity:0.5;cursor:not-allowed;" title="Hết hàng"><i class="fas fa-shopping-cart"></i></button>` : 
+        `<button class="action-btn" onclick="addToCart(${product.id})" title="Thêm vào giỏ hàng"><i class="fas fa-shopping-cart"></i></button>`;
+        
+    const mobileCartBtn = outOfStock ? 
+        `<button class="btn btn-secondary btn-sm mt-2 w-100 d-md-none rounded-pill" disabled>Hết hàng</button>` : 
+        `<button class="btn btn-outline-dark btn-sm mt-2 w-100 d-md-none rounded-pill" onclick="addToCart(${product.id})">Thêm vào giỏ</button>`;
+
     return `
     <div class="col-lg-3 col-md-6 col-6 mb-4">
         <div class="product-card h-100">
             <div class="product-img-wrapper">
                 <div class="product-badges">${badges}</div>
                 <div class="product-actions d-none d-md-flex flex-column gap-2">
-                    <button class="action-btn" onclick="addToCart(${product.id})" title="Thêm vào giỏ hàng">
-                        <i class="fas fa-shopping-cart"></i>
-                    </button>
+                    ${desktopCartBtn}
                     <a href="product-detail.html?id=${product.id}" class="action-btn" title="Xem chi tiết">
                         <i class="fas fa-eye"></i>
                     </a>
@@ -531,7 +542,7 @@ function createProductCardHTML(product) {
                     <span class="text-primary-moto fw-bold fs-6">${displayPrice}</span><br>
                     ${oldPriceHTML}
                 </div>
-                <button class="btn btn-outline-dark btn-sm mt-2 w-100 d-md-none rounded-pill" onclick="addToCart(${product.id})">Thêm vào giỏ</button>
+                ${mobileCartBtn}
             </div>
         </div>
     </div>
@@ -546,6 +557,13 @@ function addToCart(productId, quantity = 1, alertUser = true) {
     if (!product) return;
 
     const existingItem = cart.find(item => item.product.id === productId);
+    const currentQty = existingItem ? existingItem.quantity : 0;
+    
+    // Kiểm tra tồn kho
+    if (currentQty + quantity > product.stock_quantity) {
+        if(alertUser) showToast(`Xin lỗi, sản phẩm này chỉ còn ${product.stock_quantity} chiếc trong kho!`, 'warning');
+        return;
+    }
     
     if (existingItem) {
         existingItem.quantity += quantity;
@@ -735,6 +753,15 @@ window.removeCoupon = function() {
 window.updateCartQty = function(id, delta) {
     const item = cart.find(i => i.product.id === id);
     if(item) {
+        const product = productsData.find(p => p.id === id);
+        const maxStock = product ? product.stock_quantity : item.product.stock_quantity;
+
+        // Check tồn kho khi tăng số lượng
+        if (delta > 0 && item.quantity + delta > maxStock) {
+            showToast(`Kho chỉ còn ${maxStock} chiếc!`, 'warning');
+            return;
+        }
+
         item.quantity += delta;
         if(item.quantity <= 0) {
             removeCartItem(id);
@@ -763,6 +790,12 @@ window.handleCheckout = async function(e) {
     const note = document.getElementById('co_note').value;
     const btn = document.getElementById('btn-checkout');
     
+    const userData = localStorage.getItem('motoshop_user');
+    let userId = null;
+    if (userData) {
+        userId = JSON.parse(userData).id;
+    }
+
     // Đổi UI Load
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Đang xử lý...';
@@ -773,7 +806,7 @@ window.handleCheckout = async function(e) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                customer: { name, phone, address, note },
+                customer: { user_id: userId, name, phone, address, note },
                 cart: cart,
                 coupon_code: activeCoupon ? activeCoupon.code : null,
                 discount_amount: activeCoupon ? activeCoupon.discount_amount : 0

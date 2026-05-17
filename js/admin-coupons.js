@@ -1,5 +1,19 @@
 // =================== COUPONS ===================
 let adminCoupons = [];
+const COUPON_API_URL = API_BASE + 'admin_coupons.php';
+const COUPON_FIELD_IDS = {
+    id: 'cpn_id',
+    code: 'cpn_code',
+    description: 'cpn_desc',
+    type: 'cpn_type',
+    value: 'cpn_value',
+    minOrder: 'cpn_min_order',
+    maxDiscount: 'cpn_max_discount',
+    maxUses: 'cpn_max_uses',
+    startsAt: 'cpn_starts',
+    expiresAt: 'cpn_expires',
+    status: 'cpn_status'
+};
 
 const DEMO_COUPONS = [
     { id:1, code:'WELCOME10', description:'Giảm 10% cho khách hàng mới', discount_type:'percent', discount_value:10, min_order_amount:20000000, max_discount:5000000, max_uses:100, used_count:12, starts_at:null, expires_at:'2027-12-31T23:59:59', status:'active', created_at:'2026-01-01' },
@@ -9,7 +23,7 @@ const DEMO_COUPONS = [
 
 async function loadCoupons() {
     try {
-        const res = await fetch(API_BASE + 'admin_coupons.php');
+        const res = await fetch(COUPON_API_URL);
         adminCoupons = await res.json();
         if (adminCoupons.error) throw new Error();
     } catch (err) {
@@ -52,7 +66,7 @@ function renderCouponsTable(coupons) {
 }
 
 function toggleCouponFields() {
-    const type = document.getElementById('cpn_type').value;
+    const type = document.getElementById(COUPON_FIELD_IDS.type).value;
     const label = document.getElementById('cpn_value_label');
     const maxGroup = document.getElementById('cpn_max_discount_group');
     if (type === 'percent') {
@@ -67,7 +81,7 @@ function toggleCouponFields() {
 function openAddCoupon() {
     document.getElementById('couponModalTitle').textContent = 'Tạo Mã Giảm Giá Mới';
     document.getElementById('couponForm').reset();
-    document.getElementById('cpn_id').value = '';
+    document.getElementById(COUPON_FIELD_IDS.id).value = '';
     toggleCouponFields();
 }
 
@@ -75,18 +89,18 @@ function openEditCoupon(id) {
     const c = adminCoupons.find(x => x.id === id);
     if (!c) return;
     document.getElementById('couponModalTitle').textContent = 'Sửa Mã Giảm Giá';
-    document.getElementById('cpn_id').value = c.id;
-    document.getElementById('cpn_code').value = c.code;
-    document.getElementById('cpn_desc').value = c.description || '';
-    document.getElementById('cpn_type').value = c.discount_type;
-    document.getElementById('cpn_value').value = c.discount_value;
-    document.getElementById('cpn_min_order').value = c.min_order_amount || 0;
-    document.getElementById('cpn_max_discount').value = c.max_discount || '';
-    document.getElementById('cpn_max_uses').value = c.max_uses || '';
-    document.getElementById('cpn_status').value = c.status;
+    document.getElementById(COUPON_FIELD_IDS.id).value = c.id;
+    document.getElementById(COUPON_FIELD_IDS.code).value = c.code;
+    document.getElementById(COUPON_FIELD_IDS.description).value = c.description || '';
+    document.getElementById(COUPON_FIELD_IDS.type).value = c.discount_type;
+    document.getElementById(COUPON_FIELD_IDS.value).value = c.discount_value;
+    document.getElementById(COUPON_FIELD_IDS.minOrder).value = c.min_order_amount || 0;
+    document.getElementById(COUPON_FIELD_IDS.maxDiscount).value = c.max_discount || '';
+    document.getElementById(COUPON_FIELD_IDS.maxUses).value = c.max_uses || '';
+    document.getElementById(COUPON_FIELD_IDS.status).value = c.status;
     
-    if (c.starts_at) document.getElementById('cpn_starts').value = c.starts_at.slice(0, 16);
-    if (c.expires_at) document.getElementById('cpn_expires').value = c.expires_at.slice(0, 16);
+    document.getElementById(COUPON_FIELD_IDS.startsAt).value = c.starts_at ? c.starts_at.slice(0, 16) : '';
+    document.getElementById(COUPON_FIELD_IDS.expiresAt).value = c.expires_at ? c.expires_at.slice(0, 16) : '';
     
     toggleCouponFields();
     new bootstrap.Modal(document.getElementById('couponModal')).show();
@@ -95,7 +109,7 @@ function openEditCoupon(id) {
 async function deleteCoupon(id) {
     if (!confirm('Bạn có chắc muốn xóa mã giảm giá này?')) return;
     try {
-        await fetch(API_BASE + 'admin_coupons.php', {
+        await fetch(COUPON_API_URL, {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id })
@@ -105,48 +119,78 @@ async function deleteCoupon(id) {
     renderCouponsTable(adminCoupons);
 }
 
+function parseNumber(value, fallback = 0) {
+    const parsed = parseFloat(value);
+    return Number.isNaN(parsed) ? fallback : parsed;
+}
+
+function parseInteger(value, fallback = null) {
+    const parsed = parseInt(value, 10);
+    return Number.isNaN(parsed) ? fallback : parsed;
+}
+
+function getCouponFormData() {
+    const idValue = document.getElementById(COUPON_FIELD_IDS.id).value;
+    const codeValue = document.getElementById(COUPON_FIELD_IDS.code).value;
+    const maxDiscountValue = document.getElementById(COUPON_FIELD_IDS.maxDiscount).value;
+    const maxUsesValue = document.getElementById(COUPON_FIELD_IDS.maxUses).value;
+
+    return {
+        id: idValue ? parseInteger(idValue) : null,
+        code: codeValue.toUpperCase().trim(),
+        description: document.getElementById(COUPON_FIELD_IDS.description).value,
+        discount_type: document.getElementById(COUPON_FIELD_IDS.type).value,
+        discount_value: parseNumber(document.getElementById(COUPON_FIELD_IDS.value).value),
+        min_order_amount: parseNumber(document.getElementById(COUPON_FIELD_IDS.minOrder).value, 0),
+        max_discount: maxDiscountValue ? parseNumber(maxDiscountValue) : null,
+        max_uses: maxUsesValue ? parseInteger(maxUsesValue) : null,
+        starts_at: document.getElementById(COUPON_FIELD_IDS.startsAt).value || null,
+        expires_at: document.getElementById(COUPON_FIELD_IDS.expiresAt).value || null,
+        status: document.getElementById(COUPON_FIELD_IDS.status).value
+    };
+}
+
+async function saveCoupon(couponData) {
+    const method = couponData.id ? 'PUT' : 'POST';
+    const res = await fetch(COUPON_API_URL, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(couponData)
+    });
+    return res.json();
+}
+
+function assignCouponId(couponData) {
+    if (couponData.id) return;
+    couponData.id = adminCoupons.length > 0 ? Math.max(...adminCoupons.map(c => c.id)) + 1 : 1;
+}
+
+function upsertCouponLocal(couponData) {
+    const idx = couponData.id ? adminCoupons.findIndex(c => c.id === couponData.id) : -1;
+    if (idx !== -1) {
+        adminCoupons[idx] = { ...adminCoupons[idx], ...couponData };
+        return;
+    }
+    assignCouponId(couponData);
+    couponData.used_count = 0;
+    adminCoupons.push(couponData);
+}
+
 onReady(() => {
     const form = el('couponForm');
     if (form) {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const couponData = {
-                id: document.getElementById('cpn_id').value ? parseInt(document.getElementById('cpn_id').value) : null,
-                code: document.getElementById('cpn_code').value.toUpperCase().trim(),
-                description: document.getElementById('cpn_desc').value,
-                discount_type: document.getElementById('cpn_type').value,
-                discount_value: parseFloat(document.getElementById('cpn_value').value),
-                min_order_amount: parseFloat(document.getElementById('cpn_min_order').value) || 0,
-                max_discount: document.getElementById('cpn_max_discount').value ? parseFloat(document.getElementById('cpn_max_discount').value) : null,
-                max_uses: document.getElementById('cpn_max_uses').value ? parseInt(document.getElementById('cpn_max_uses').value) : null,
-                starts_at: document.getElementById('cpn_starts').value || null,
-                expires_at: document.getElementById('cpn_expires').value || null,
-                status: document.getElementById('cpn_status').value
-            };
+            const couponData = getCouponFormData();
 
             try {
-                const method = couponData.id ? 'PUT' : 'POST';
-                const res = await fetch(API_BASE + 'admin_coupons.php', {
-                    method,
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(couponData)
-                });
-                const result = await res.json();
+                const result = await saveCoupon(couponData);
                 if (!couponData.id && result.id) couponData.id = result.id;
             } catch (err) {
                 console.warn('Demo mode - not saved to DB');
             }
 
-            if (couponData.id && adminCoupons.find(c => c.id === couponData.id)) {
-                const idx = adminCoupons.findIndex(c => c.id === couponData.id);
-                if (idx !== -1) adminCoupons[idx] = { ...adminCoupons[idx], ...couponData };
-            } else {
-                if (!couponData.id) {
-                    couponData.id = adminCoupons.length > 0 ? Math.max(...adminCoupons.map(c => c.id)) + 1 : 1;
-                }
-                couponData.used_count = 0;
-                adminCoupons.push(couponData);
-            }
+            upsertCouponLocal(couponData);
 
             renderCouponsTable(adminCoupons);
             bootstrap.Modal.getInstance(document.getElementById('couponModal')).hide();
