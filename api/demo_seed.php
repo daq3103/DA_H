@@ -23,7 +23,12 @@ try {
     $pdo->exec("INSERT INTO brands (id, name, slug) VALUES (1, 'Honda', 'honda'), (2, 'Yamaha', 'yamaha'), (3, 'Ducati', 'ducati');");
     
     // Insert Categories
-    $pdo->exec("INSERT INTO categories (id, name, slug) VALUES (1, 'Xe Tay Ga', 'xe-tay-ga'), (2, 'Xe Số', 'xe-so'), (3, 'Xe Côn Tay', 'xe-con-tay'), (4, 'Phân Khối Lớn', 'phan-khoi-lon');");
+    $pdo->exec("INSERT INTO categories (id, name, slug, description) VALUES
+        (1, 'Xe Tay Ga', 'xe-tay-ga', 'Dòng xe tay ga phổ biến'),
+        (2, 'Xe Số', 'xe-so', 'Xe số tiết kiệm nhiên liệu'),
+        (3, 'Xe Côn Tay', 'xe-con-tay', 'Xe côn tay thể thao'),
+        (4, 'Phân Khối Lớn', 'phan-khoi-lon', 'PKL, sportbike cao cấp'),
+        (5, 'Xe Điện', 'xe-dien', 'Xe máy điện, xăng lai');");
     
     // Insert Products Data (Tương tự JSON mock)
     $stmtProc = $pdo->prepare("INSERT INTO products (id, brand_id, category_id, name, slug, price, sale_price, main_image, is_hot, is_new) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");

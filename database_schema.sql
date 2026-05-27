@@ -23,6 +23,13 @@ CREATE TABLE categories (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
+INSERT INTO categories (name, slug, description) VALUES
+('Xe Tay Ga', 'xe-tay-ga', 'Dòng xe tay ga phổ biến'),
+('Xe Số', 'xe-so', 'Xe số tiết kiệm nhiên liệu'),
+('Xe Côn Tay', 'xe-con-tay', 'Xe côn tay thể thao'),
+('Phân Khối Lớn', 'phan-khoi-lon', 'PKL, sportbike cao cấp'),
+('Xe Điện', 'xe-dien', 'Xe máy điện, xăng lai');
+
 -- 3. Bảng Sản phẩm (Xe máy)
 CREATE TABLE products (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -142,31 +149,9 @@ CREATE TABLE news (
     INDEX idx_published_at (published_at)
 ) ENGINE=InnoDB;
 
--- 10. Bảng Mã giảm giá (Coupon)
-CREATE TABLE coupons (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    code VARCHAR(50) UNIQUE NOT NULL,
-    description VARCHAR(255),
-    discount_type ENUM('percent', 'fixed') NOT NULL DEFAULT 'percent', -- % hoặc số tiền cố định
-    discount_value DECIMAL(15, 0) NOT NULL, -- Giá trị giảm (VD: 10 = 10%, hoặc 500000 = 500k VND)
-    min_order_amount DECIMAL(15, 0) DEFAULT 0, -- Đơn hàng tối thiểu để áp dụng
-    max_discount DECIMAL(15, 0) DEFAULT NULL, -- Giảm tối đa (chỉ dùng cho type=percent)
-    max_uses INT DEFAULT NULL, -- Số lần sử dụng tối đa (NULL = không giới hạn)
-    used_count INT DEFAULT 0,
-    starts_at TIMESTAMP NULL DEFAULT NULL,
-    expires_at TIMESTAMP NULL DEFAULT NULL,
-    status ENUM('active', 'inactive') DEFAULT 'active',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
+-- (Đã bỏ tính năng mã giảm giá — bảng coupons không còn dùng)
 
--- Dữ liệu mẫu cho coupons
-INSERT INTO coupons (code, description, discount_type, discount_value, min_order_amount, max_discount, max_uses, expires_at) VALUES
-('WELCOME10', 'Giảm 10% cho khách hàng mới', 'percent', 10, 20000000, 5000000, 100, '2027-12-31 23:59:59'),
-('GIAM500K', 'Giảm 500,000đ cho đơn từ 30 triệu', 'fixed', 500000, 30000000, NULL, 50, '2027-06-30 23:59:59'),
-('SUMMER2026', 'Ưu đãi mùa hè - Giảm 5%', 'percent', 5, 0, 3000000, NULL, '2026-08-31 23:59:59');
-
--- 11. Bảng Liên hệ
+-- 10. Bảng Liên hệ
 CREATE TABLE contacts (
     id INT AUTO_INCREMENT PRIMARY KEY,
     full_name VARCHAR(150) NOT NULL,

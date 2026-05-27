@@ -64,31 +64,6 @@
                         <span class="text-muted">Phí vận chuyển</span>
                         <span class="text-success fw-medium">Miễn phí (Nội thành HN)</span>
                     </div>
-
-                    <!-- Mã giảm giá -->
-                    <div class="mb-3 border-bottom pb-3" id="coupon-section">
-                        <label class="form-label small text-muted fw-bold"><i class="fas fa-ticket-alt me-1"></i>Mã Giảm Giá</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control text-uppercase" id="coupon-input" placeholder="Nhập mã giảm giá..." style="letter-spacing: 1px;">
-                            <button class="btn btn-outline-dark" type="button" id="btn-apply-coupon" onclick="applyCoupon()">Áp dụng</button>
-                        </div>
-                        <div id="coupon-message" class="small mt-2" style="display:none;"></div>
-                        <div id="coupon-applied" class="d-none mt-2 p-2 rounded" style="background:#d1fae5;">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <span class="text-success fw-bold small" id="coupon-code-display"></span>
-                                    <span class="text-muted small ms-1" id="coupon-desc-display"></span>
-                                </div>
-                                <button class="btn btn-sm text-danger p-0" onclick="removeCoupon()" title="Xóa mã"><i class="fas fa-times"></i></button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Giảm giá -->
-                    <div class="d-flex justify-content-between mb-2 d-none" id="discount-row">
-                        <span class="text-muted">Giảm giá</span>
-                        <span class="fw-bold text-success" id="cart-discount">- 0 ₫</span>
-                    </div>
                     
                     <div class="d-flex justify-content-between mb-4">
                         <span class="fw-bold fs-5">Thành tiền</span>
@@ -112,7 +87,37 @@
                             <label class="form-label small text-muted">Ghi Chú Đơn Hàng</label>
                             <textarea class="form-control" rows="2" id="co_note"></textarea>
                         </div>
-                        <button type="submit" class="btn btn-moto-primary w-100 fw-bold py-3 text-uppercase fs-6 shadow-sm rounded-pill" id="btn-checkout">Xác Nhận Đặt Hàng</button>
+
+                        <div class="mb-4">
+                            <label class="form-label small text-muted fw-semibold">Phương thức thanh toán *</label>
+                            <div class="payment-method-list">
+                                <label class="payment-method-option">
+                                    <input type="radio" name="payment_method" value="cod" class="payment-method-input" checked>
+                                    <span class="payment-method-card">
+                                        <span class="payment-method-icon"><i class="fas fa-hand-holding-usd"></i></span>
+                                        <span class="payment-method-text">
+                                            <strong>Thanh toán khi nhận hàng</strong>
+                                            <small>Trả tiền trực tiếp khi nhận xe tại cửa hàng</small>
+                                        </span>
+                                    </span>
+                                </label>
+                                <label class="payment-method-option">
+                                    <input type="radio" name="payment_method" value="qr_transfer" class="payment-method-input">
+                                    <span class="payment-method-card">
+                                        <span class="payment-method-icon"><i class="fas fa-qrcode"></i></span>
+                                        <span class="payment-method-text">
+                                            <strong>Chuyển khoản QR</strong>
+                                            <small>Quét mã và xác nhận thanh toán trước</small>
+                                        </span>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-moto-primary w-100 fw-bold py-3 text-uppercase fs-6 shadow-sm rounded-pill" id="btn-checkout">
+                            <i class="fas fa-truck me-2"></i> Đặt hàng — Thanh toán khi nhận
+                        </button>
+                        <p class="text-muted small text-center mt-2 mb-0" id="checkout-btn-hint">Thanh toán trực tiếp khi nhận xe tại cửa hàng</p>
                     </form>
                 </div>
             </div>
@@ -127,10 +132,57 @@
         </div>
     </div>
 
+    <!-- Modal thanh toán demo (QR) -->
+    <div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <div id="payment-step-qr">
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title fw-bold" id="paymentModalLabel">
+                            <i class="fas fa-qrcode text-primary-moto me-2"></i>Thanh toán chuyển khoản
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                    </div>
+                    <div class="modal-body text-center pt-2">
+                        <p class="text-muted small mb-3">Quét mã QR bằng app ngân hàng, kiểm tra số tiền bên dưới rồi bấm xác nhận.</p>
+                        <div class="payment-qr-wrap mx-auto mb-3">
+                            <img id="payment-qr-img" src="" alt="Mã QR thanh toán" width="220" height="220" class="rounded-3 border">
+                        </div>
+                        <p class="fw-bold fs-4 text-primary-moto mb-1" id="payment-amount">0 ₫</p>
+                        <p class="text-muted small mb-3" id="payment-qr-desc"></p>
+                        <div class="bg-light rounded-3 p-3 text-start small text-muted">
+                            <div><strong>Ngân hàng:</strong> Vietcombank</div>
+                            <div><strong>Số tài khoản:</strong> 1234567890</div>
+                            <div><strong>Chủ tài khoản:</strong> CONG TY MOTO SHOP</div>
+                            <div class="mt-2"><strong>Nội dung CK:</strong> <span id="payment-transfer-note" class="text-dark">MOTOSHOP</span></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0 flex-column flex-sm-row gap-2">
+                        <button type="button" class="btn btn-outline-secondary rounded-pill w-100 w-sm-auto" data-bs-dismiss="modal">Hủy</button>
+                        <button type="button" class="btn btn-moto-primary rounded-pill w-100 flex-grow-1 fw-bold" id="btn-confirm-payment" onclick="confirmDemoPayment()">
+                            <i class="fas fa-check-circle me-1"></i> Xác nhận đã thanh toán
+                        </button>
+                    </div>
+                </div>
+                <div id="payment-step-success" class="d-none text-center p-4 p-md-5">
+                    <div class="payment-success-icon mb-3">
+                        <i class="fas fa-check-circle text-success"></i>
+                    </div>
+                    <h4 class="fw-bold text-success mb-2" id="payment-success-title">Thanh toán thành công!</h4>
+                    <p class="text-muted mb-1" id="payment-success-desc">Cảm ơn bạn. Đơn hàng đã được ghi nhận.</p>
+                    <p class="fw-bold mb-2" id="payment-success-order">#HD0000</p>
+                    <p class="small text-muted mb-4 px-2" id="payment-success-note"></p>
+                    <a href="index.html" class="btn btn-moto-primary rounded-pill px-4 fw-bold">Về trang chủ</a>
+                    <a href="my-orders.html" class="btn btn-outline-dark rounded-pill px-4 ms-2">Xem đơn hàng</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/shared/moto-shared.js"></script>
-    <script src="js/main.js"></script>
+    <script src="js/main.js?v=8"></script>
     <script src="js/main-bootstrap.js"></script>
 </body>
 </html>

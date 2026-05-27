@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Báo Cáo Thống Kê - MotoShop Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body class="admin-body">
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <aside class="admin-sidebar" id="adminSidebar">
+        <a href="index.html" class="sidebar-brand">
+            <i class="fas fa-motorcycle"></i>
+            <div><span>MotoShop</span><small>Admin Panel</small></div>
+        </a>
+        <ul class="sidebar-nav">
+            <li class="nav-label">Tổng quan</li>
+            <li><a href="index.html"><i class="fas fa-th-large"></i> Dashboard</a></li>
+            <li><a href="reports.html" class="active"><i class="fas fa-chart-bar"></i> Báo cáo</a></li>
+            <li class="nav-label">Quản lý</li>
+            <li><a href="products.html"><i class="fas fa-motorcycle"></i> Sản phẩm</a></li>
+            <li><a href="categories.html"><i class="fas fa-tags"></i> Danh mục</a></li>
+            <li><a href="orders.html"><i class="fas fa-shopping-bag"></i> Đơn hàng</a></li>
+            <li><a href="customers.html"><i class="fas fa-users"></i> Khách hàng</a></li>
+            <li class="nav-label">Nội dung</li>
+            <li><a href="news.html"><i class="fas fa-newspaper"></i> Tin tức</a></li>
+            <li><a href="contacts.html"><i class="fas fa-envelope"></i> Liên hệ</a></li>
+            <li class="nav-label">Hệ thống</li>
+            <li><a href="../index.html" target="_blank"><i class="fas fa-external-link-alt"></i> Xem Website</a></li>
+            <li><a href="#" onclick="adminLogout()" class="text-danger"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a></li>
+        </ul>
+    </aside>
+
+    <div class="admin-main">
+        <div class="admin-topbar">
+            <div class="topbar-left">
+                <button class="btn-sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                <div>
+                    <h5>Báo Cáo Thống Kê</h5>
+                    <span class="breadcrumb-text">Dashboard / Báo cáo — <strong id="report-period-label">Hôm nay</strong></span>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <div class="d-none d-md-block text-end">
+                    <div class="admin-name" id="topbar-admin-name">Admin</div>
+                    <div class="admin-role">Quản trị viên</div>
+                </div>
+                <div class="admin-avatar" id="topbar-avatar">A</div>
+                <button class="btn-logout" onclick="adminLogout()"><i class="fas fa-sign-out-alt me-1"></i> Thoát</button>
+            </div>
+        </div>
+
+        <div class="admin-content">
+            <!-- Bộ lọc thời gian -->
+            <div class="admin-card mb-4">
+                <div class="admin-card-body d-flex flex-wrap align-items-center gap-2" style="padding: 16px 20px;">
+                    <span class="text-muted small me-2"><i class="fas fa-filter me-1"></i> Xem theo:</span>
+                    <button type="button" class="btn btn-sm btn-admin-outline report-period-btn active" data-report-period="today" onclick="loadReports('today')">Hôm nay</button>
+                    <button type="button" class="btn btn-sm btn-admin-outline report-period-btn" data-report-period="week" onclick="loadReports('week')">Tuần này</button>
+                    <button type="button" class="btn btn-sm btn-admin-outline report-period-btn" data-report-period="month" onclick="loadReports('month')">Tháng này</button>
+                    <button type="button" class="btn btn-sm btn-admin-outline report-period-btn" data-report-period="year" onclick="loadReports('year')">Năm nay</button>
+                    <button type="button" class="btn btn-sm btn-admin-outline report-period-btn" data-report-period="all" onclick="loadReports('all')">Tất cả</button>
+                </div>
+            </div>
+
+            <!-- Số liệu chính -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-6 col-xl-4">
+                    <div class="stat-card">
+                        <div class="stat-icon bg-gradient-blue mb-3"><i class="fas fa-shopping-bag"></i></div>
+                        <p class="stat-value" id="report-orders-total">0</p>
+                        <p class="stat-label">Tổng đơn hàng</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-xl-4">
+                    <div class="stat-card">
+                        <div class="stat-icon bg-gradient-orange mb-3"><i class="fas fa-coins"></i></div>
+                        <p class="stat-value" id="report-revenue">0 ₫</p>
+                        <p class="stat-label">Doanh thu (đã hoàn thành)</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-xl-4">
+                    <div class="stat-card">
+                        <div class="stat-icon bg-gradient-green mb-3"><i class="fas fa-user-plus"></i></div>
+                        <p class="stat-value" id="report-customers">0</p>
+                        <p class="stat-label">Khách đăng ký mới</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-md-4">
+                    <div class="admin-card h-100">
+                        <div class="admin-card-body text-center py-4">
+                            <p class="stat-value text-success mb-1" id="report-completed">0</p>
+                            <p class="stat-label mb-0">Đơn hoàn thành</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="admin-card h-100">
+                        <div class="admin-card-body text-center py-4">
+                            <p class="stat-value mb-1" style="color:#d97706;" id="report-pending">0</p>
+                            <p class="stat-label mb-0">Đơn chờ xử lý</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="admin-card h-100">
+                        <div class="admin-card-body text-center py-4">
+                            <p class="stat-value text-danger mb-1" id="report-cancelled">0</p>
+                            <p class="stat-label mb-0">Đơn đã hủy</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Thống kê tồn kho theo mã sản phẩm -->
+            <div class="admin-card mb-4">
+                <div class="admin-card-header flex-wrap gap-2">
+                    <h6 class="mb-0"><i class="fas fa-warehouse me-2 text-warning"></i>Thống Kê Tồn Kho (Theo Mã SP)</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="button" class="btn btn-sm btn-admin-outline stock-filter-btn active" data-stock-filter="all" onclick="filterStockReport('all')">Tất cả</button>
+                        <button type="button" class="btn btn-sm btn-admin-outline stock-filter-btn" data-stock-filter="low" onclick="filterStockReport('low')">Sắp hết (≤5)</button>
+                        <button type="button" class="btn btn-sm btn-admin-outline stock-filter-btn" data-stock-filter="out" onclick="filterStockReport('out')">Hết hàng</button>
+                    </div>
+                </div>
+                <div class="admin-card-body">
+                    <div class="row g-3 mb-4">
+                        <div class="col-6 col-md-3">
+                            <div class="text-center p-3 rounded" style="background:#f0f2f5;">
+                                <p class="stat-value mb-0" style="font-size:1.4rem;" id="stock-total-products">0</p>
+                                <p class="stat-label mb-0">Mã sản phẩm</p>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="text-center p-3 rounded" style="background:#eff6ff;">
+                                <p class="stat-value mb-0 text-primary" style="font-size:1.4rem;" id="stock-total-units">0</p>
+                                <p class="stat-label mb-0">Tổng xe trong kho</p>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="text-center p-3 rounded" style="background:#fef3c7;">
+                                <p class="stat-value mb-0" style="font-size:1.4rem;color:#d97706;" id="stock-low-count">0</p>
+                                <p class="stat-label mb-0">Sắp hết hàng</p>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="text-center p-3 rounded" style="background:#fee2e2;">
+                                <p class="stat-value mb-0 text-danger" style="font-size:1.4rem;" id="stock-out-count">0</p>
+                                <p class="stat-label mb-0">Hết hàng</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Mã SP</th>
+                                    <th>Mã slug</th>
+                                    <th>Tên xe</th>
+                                    <th>Hãng</th>
+                                    <th>Danh mục</th>
+                                    <th class="text-center">Tồn kho</th>
+                                    <th class="text-center">Trạng thái kho</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stock-inventory-tbody">
+                                <tr><td colspan="7" class="text-center text-muted py-4">Đang tải...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Biểu đồ 7 ngày -->
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h6><i class="fas fa-chart-column me-2 text-primary"></i>Đơn hàng 7 ngày gần nhất</h6>
+                </div>
+                <div class="admin-card-body">
+                    <p class="text-muted small mb-3">Di chuột vào cột để xem doanh thu từng ngày (đơn hoàn thành).</p>
+                    <div id="report-chart-bars" class="report-chart"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/shared/moto-shared.js"></script>
+    <script src="../js/admin.js"></script>
+    <script src="../js/admin-reports.js"></script>
+    <script src="../js/admin-bootstrap.js"></script>
+</body>
+</html>

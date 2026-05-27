@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Lý Tin Tức - MotoShop Admin</title>
+    <title>Quản Lý Danh Mục - MotoShop Admin</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -26,11 +26,11 @@
             <li><a href="reports.html"><i class="fas fa-chart-bar"></i> Báo cáo</a></li>
             <li class="nav-label">Quản lý</li>
             <li><a href="products.html"><i class="fas fa-motorcycle"></i> Sản phẩm</a></li>
-            <li><a href="categories.html"><i class="fas fa-tags"></i> Danh mục</a></li>
+            <li><a href="categories.html" class="active"><i class="fas fa-tags"></i> Danh mục</a></li>
             <li><a href="orders.html"><i class="fas fa-shopping-bag"></i> Đơn hàng</a></li>
             <li><a href="customers.html"><i class="fas fa-users"></i> Khách hàng</a></li>
             <li class="nav-label">Nội dung</li>
-            <li><a href="news.html" class="active"><i class="fas fa-newspaper"></i> Tin tức</a></li>
+            <li><a href="news.html"><i class="fas fa-newspaper"></i> Tin tức</a></li>
             <li><a href="contacts.html"><i class="fas fa-envelope"></i> Liên hệ</a></li>
             <li class="nav-label">Hệ thống</li>
             <li><a href="../index.html" target="_blank"><i class="fas fa-external-link-alt"></i> Xem Website</a></li>
@@ -43,8 +43,8 @@
             <div class="topbar-left">
                 <button class="btn-sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
                 <div>
-                    <h5>Quản Lý Tin Tức</h5>
-                    <span class="breadcrumb-text">Dashboard / Tin tức</span>
+                    <h5>Quản Lý Danh Mục</h5>
+                    <span class="breadcrumb-text">Dashboard / Danh mục</span>
                 </div>
             </div>
             <div class="topbar-right">
@@ -60,9 +60,9 @@
         <div class="admin-content">
             <div class="admin-card">
                 <div class="admin-card-header">
-                    <h6><i class="fas fa-newspaper me-2 text-info"></i>Danh Sách Bài Viết</h6>
-                    <button class="btn-admin-primary" data-bs-toggle="modal" data-bs-target="#newsModal" onclick="openAddNews()">
-                        <i class="fas fa-plus"></i> Thêm Bài Viết
+                    <h6><i class="fas fa-tags me-2 text-primary"></i>Danh Sách Danh Mục</h6>
+                    <button class="btn btn-admin-primary btn-sm" onclick="openAddCategory()">
+                        <i class="fas fa-plus me-1"></i> Thêm danh mục
                     </button>
                 </div>
                 <div class="admin-card-body" style="overflow-x: auto;">
@@ -70,14 +70,14 @@
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <th>Ảnh</th>
-                                <th>Tiêu đề</th>
-                                <th>Tác giả</th>
-                                <th>Ngày đăng</th>
-                                <th>Hành động</th>
+                                <th>Tên</th>
+                                <th>Slug (URL)</th>
+                                <th>Số sản phẩm</th>
+                                <th>Mô tả</th>
+                                <th>Thao tác</th>
                             </tr>
                         </thead>
-                        <tbody id="news-tbody">
+                        <tbody id="categories-tbody">
                             <tr><td colspan="6" class="text-center text-muted py-4">Đang tải...</td></tr>
                         </tbody>
                     </table>
@@ -86,45 +86,33 @@
         </div>
     </div>
 
-    <!-- News Modal -->
-    <div class="modal fade" id="newsModal" tabindex="-1">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal fade" id="categoryModal" tabindex="-1">
+        <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="newsModalTitle">Thêm Bài Viết</h5>
+                    <h5 class="modal-title" id="categoryModalTitle">Thêm Danh Mục</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form id="newsForm">
-                    <div class="modal-body">
-                        <input type="hidden" id="news_id">
-                        <div class="row g-3">
-                            <div class="col-12">
-                                <label class="form-label">Tiêu đề <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="news_title" required placeholder="Tiêu đề bài viết">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Tác giả</label>
-                                <input type="text" class="form-control" id="news_author" placeholder="Tên tác giả">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">URL ảnh thumbnail</label>
-                                <input type="text" class="form-control" id="news_thumbnail" placeholder="https://...">
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label">Tóm tắt</label>
-                                <textarea class="form-control" id="news_summary" rows="2" placeholder="Mô tả ngắn gọn..."></textarea>
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label">Nội dung bài viết</label>
-                                <textarea class="form-control" id="news_content" rows="8" placeholder="Nội dung chi tiết..."></textarea>
-                            </div>
-                        </div>
+                <div class="modal-body">
+                    <input type="hidden" id="cat_id">
+                    <div class="mb-3">
+                        <label class="form-label">Tên danh mục <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="cat_name" placeholder="VD: Xe Điện" required>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn-admin-outline" data-bs-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn-admin-primary"><i class="fas fa-save"></i> Lưu Bài Viết</button>
+                    <div class="mb-3">
+                        <label class="form-label">Slug (URL)</label>
+                        <input type="text" class="form-control" id="cat_slug" placeholder="xe-dien (tự tạo nếu để trống)">
+                        <div class="form-text">Dùng trong link: products.html?category=xe-dien</div>
                     </div>
-                </form>
+                    <div class="mb-3">
+                        <label class="form-label">Mô tả</label>
+                        <textarea class="form-control" id="cat_desc" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-admin-primary" onclick="saveCategoryForm()">Lưu</button>
+                </div>
             </div>
         </div>
     </div>

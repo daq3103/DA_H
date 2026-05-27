@@ -24,8 +24,10 @@
         <ul class="sidebar-nav">
             <li class="nav-label">Tổng quan</li>
             <li><a href="index.html"><i class="fas fa-th-large"></i> Dashboard</a></li>
+            <li><a href="reports.html"><i class="fas fa-chart-bar"></i> Báo cáo</a></li>
             <li class="nav-label">Quản lý</li>
             <li><a href="products.html" class="active"><i class="fas fa-motorcycle"></i> Sản phẩm</a></li>
+            <li><a href="categories.html"><i class="fas fa-tags"></i> Danh mục</a></li>
             <li><a href="orders.html"><i class="fas fa-shopping-bag"></i> Đơn hàng</a></li>
             <li><a href="customers.html"><i class="fas fa-users"></i> Khách hàng</a></li>
             <li class="nav-label">Nội dung</li>
@@ -129,11 +131,8 @@
                                 <label class="form-label">Loại xe <span class="text-danger">*</span></label>
                                 <select class="form-select" id="prod_category" required>
                                     <option value="">-- Chọn loại --</option>
-                                    <option value="1">Xe Tay Ga</option>
-                                    <option value="2">Xe Số</option>
-                                    <option value="3">Xe Côn Tay</option>
-                                    <option value="4">Phân Khối Lớn</option>
                                 </select>
+                                <div class="form-text"><a href="categories.html">Quản lý danh mục</a></div>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Trạng thái</label>
@@ -173,8 +172,9 @@
                                 </div>
                             </div>
                             <div class="col-12">
-                                <label class="form-label">Mô tả</label>
-                                <textarea class="form-control" id="prod_desc" rows="3" placeholder="Mô tả chi tiết sản phẩm..."></textarea>
+                                <label class="form-label">Mô tả sản phẩm</label>
+                                <textarea class="form-control" id="prod_desc" rows="6" placeholder="Mô tả chi tiết: đặc điểm nổi bật, màu sắc, chính sách bảo hành, khuyến mãi... (hiển thị trên trang chi tiết xe)"></textarea>
+                                <div class="form-text">Khách hàng sẽ xem phần này ở trang chi tiết sản phẩm.</div>
                             </div>
                             <div class="col-12">
                                 <hr>

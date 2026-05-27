@@ -28,6 +28,12 @@ try {
     $name = trim($input['customer']['name'] ?? '');
     $address = trim($input['customer']['address'] ?? '');
 
+    $userId = (int)($input['customer']['user_id'] ?? 0);
+    if ($userId <= 0) {
+        echo json_encode(['success' => false, 'message' => 'Vui lòng đăng nhập để đặt hàng']);
+        exit;
+    }
+
     // Validate số điện thoại (chỉ chứa chữ số và độ dài 10-11)
     if (!preg_match('/^[0-9]{10,11}$/', $phone)) {
         echo json_encode(['success' => false, 'message' => 'Số điện thoại không hợp lệ']);
@@ -36,10 +42,10 @@ try {
 
     $pdo->beginTransaction();
 
-    // 1. Nhận diện User đặt hàng (Nếu đang đăng nhập thì có user_id, nếu không thì là Guest)
-    $userId = (int)($input['customer']['user_id'] ?? 0);
-    if ($userId <= 0) {
-        $userId = null; // Guest checkout
+    $stmtUser = $pdo->prepare("SELECT id FROM users WHERE id = ? AND status = 'active'");
+    $stmtUser->execute([$userId]);
+    if (!$stmtUser->fetch()) {
+        throw new Exception('Tài khoản không hợp lệ hoặc đã bị khóa. Vui lòng đăng nhập lại.');
     }
 
     // 2. Kiểm tra tồn kho và tính tổng tiền từ Database
@@ -74,63 +80,32 @@ try {
         ];
     }
 
-    // 2.5. Xử lý mã giảm giá (nếu có)
-    $couponCode = $input['coupon_code'] ?? null;
-    $discountAmount = (int)($input['discount_amount'] ?? 0);
-
-    if ($couponCode) {
-        // Verify coupon vẫn hợp lệ
-        $stmtCoupon = $pdo->prepare("SELECT * FROM coupons WHERE code = ? AND status = 'active'");
-        $stmtCoupon->execute([$couponCode]);
-        $coupon = $stmtCoupon->fetch();
-
-        if ($coupon) {
-            // Kiểm tra thời hạn
-            if ($coupon['starts_at'] && strtotime($coupon['starts_at']) > time()) {
-                throw new Exception('Mã giảm giá chưa bắt đầu hiệu lực');
-            }
-            if ($coupon['expires_at'] && strtotime($coupon['expires_at']) < time()) {
-                throw new Exception('Mã giảm giá đã hết hạn');
-            }
-
-            // Kiểm tra số lần sử dụng
-            if ($coupon['max_uses'] !== null && $coupon['used_count'] >= $coupon['max_uses']) {
-                throw new Exception('Mã giảm giá đã hết lượt sử dụng');
-            }
-
-            // Kiểm tra đơn tối thiểu
-            if ($totalAmount < $coupon['min_order_amount']) {
-                throw new Exception('Đơn hàng không đủ điều kiện tối thiểu để áp dụng mã giảm giá này');
-            }
-
-            // Tính lại discount server-side để đảm bảo chính xác
-            $serverDiscount = 0;
-            if ($coupon['discount_type'] === 'percent') {
-                $serverDiscount = $totalAmount * ($coupon['discount_value'] / 100);
-                if ($coupon['max_discount'] && $serverDiscount > $coupon['max_discount']) {
-                    $serverDiscount = $coupon['max_discount'];
-                }
-            } else {
-                $serverDiscount = $coupon['discount_value'];
-            }
-            if ($serverDiscount > $totalAmount) $serverDiscount = $totalAmount;
-            $discountAmount = $serverDiscount;
-            $totalAmount -= $discountAmount;
-
-            // Tăng used_count
-            $pdo->prepare("UPDATE coupons SET used_count = used_count + 1 WHERE id = ?")->execute([$coupon['id']]);
-        } else {
-            $discountAmount = 0;
-        }
-    }
-
     // 3. Tạo mã đơn hàng (VD: HD2603-A1B2)
     $orderCode = 'HD' . date('dm') . '-' . strtoupper(substr(bin2hex(random_bytes(2)), 0, 4));
 
+    $paymentMethod = $input['payment_method'] ?? '';
+    if (!in_array($paymentMethod, ['cod', 'qr_transfer'], true)) {
+        // Tương thích request cũ
+        $paymentMethod = !empty($input['payment_confirmed']) ? 'qr_transfer' : 'cod';
+    }
+
+    $orderNotes = trim($input['customer']['note'] ?? '');
+
+    if ($paymentMethod === 'qr_transfer') {
+        if (empty($input['payment_confirmed'])) {
+            throw new Exception('Vui lòng xác nhận đã chuyển khoản trước khi hoàn tất đơn.');
+        }
+        $paymentStatus = 'paid';
+        $orderNotes = trim('[Thanh toán QR] ' . $orderNotes);
+    } else {
+        $paymentStatus = 'unpaid';
+        $orderNotes = trim('[Thanh toán khi nhận hàng] ' . $orderNotes);
+    }
+
     // 4. Lưu đơn hàng với snapshot thông tin giao hàng
     $stmtOrder = $pdo->prepare("
-        INSERT INTO orders (order_code, user_id, shipping_name, shipping_phone, shipping_address, total_amount, notes)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO orders (order_code, user_id, shipping_name, shipping_phone, shipping_address, total_amount, payment_method, payment_status, notes)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
     $stmtOrder->execute([
         $orderCode,
@@ -139,7 +114,9 @@ try {
         $phone,
         $address,
         $totalAmount,
-        ($couponCode ? "[Mã giảm giá: $couponCode - Giảm " . number_format($discountAmount,0,',','.') . "₫] " : '') . ($input['customer']['note'] ?? '')
+        $paymentMethod,
+        $paymentStatus,
+        $orderNotes
     ]);
     $orderId = $pdo->lastInsertId();
 

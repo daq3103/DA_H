@@ -749,3 +749,60 @@ body.admin-body {
 .badge-pulse {
     animation: pulse 2s infinite;
 }
+
+/* ===================== BÁO CÁO THỐNG KÊ ===================== */
+.report-period-btn.active,
+.stock-filter-btn.active {
+    background: var(--admin-accent);
+    color: #fff;
+    border-color: var(--admin-accent);
+}
+
+.status-badge.stock-ok { background: #d1fae5; color: #059669; }
+.status-badge.stock-low { background: #fef3c7; color: #d97706; }
+.status-badge.stock-out { background: #fee2e2; color: #dc2626; }
+
+.report-chart {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 200px;
+    padding: 10px 0;
+}
+
+.report-bar-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 90px;
+    cursor: default;
+}
+
+.report-bar-track {
+    width: 100%;
+    height: 160px;
+    display: flex;
+    align-items: flex-end;
+    background: #eef1f6;
+    border-radius: 8px 8px 0 0;
+}
+
+.report-bar-fill {
+    width: 100%;
+    background: linear-gradient(180deg, #3b82f6, #1d4ed8);
+    border-radius: 8px 8px 0 0;
+    transition: height 0.35s ease;
+}
+
+.report-bar-value {
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-top: 6px;
+}
+
+.report-bar-label {
+    font-size: 0.7rem;
+    color: var(--admin-text-muted);
+}

@@ -16,10 +16,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const page = getCurrentPage();
     if (page === 'index') await loadDashboard();
+    if (page === 'reports') await loadReports('today');
     if (page === 'products') await loadProducts();
+    if (page === 'categories') await loadCategories();
     if (page === 'orders') await loadOrders();
     if (page === 'customers') await loadCustomers();
     if (page === 'news') await loadNews();
     if (page === 'contacts') await loadContacts();
-    if (page === 'coupons') await loadCoupons();
 });

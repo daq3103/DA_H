@@ -75,13 +75,14 @@
             if (m) { window.location.href = 'http://localhost/shop/' + (m[1] || 'login.html'); }
         }
 
-        // Nếu đã đăng nhập → về trang chủ
+        const urlParams = new URLSearchParams(window.location.search);
+
+        // Nếu đã đăng nhập → quay lại trang trước (hoặc trang chủ)
         if (localStorage.getItem('motoshop_user')) {
-            window.location.href = 'index.html';
+            window.location.href = urlParams.get('redirect') || 'index.html';
         }
 
         // Hiện thông báo nếu vừa đăng ký xong
-        const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('registered') === '1') {
             const successBox = document.getElementById('auth-success');
             document.getElementById('auth-success-msg').textContent = 'Đăng ký thành công! Hãy đăng nhập.';

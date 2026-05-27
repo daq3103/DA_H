@@ -10,6 +10,7 @@ const onReady = (callback) => document.addEventListener('DOMContentLoaded', call
 const ADMIN_API_URLS = {
     stats: API_BASE + 'admin_stats.php',
     products: API_BASE + 'admin_products.php',
+    categories: API_BASE + 'admin_categories.php',
     uploadImage: API_BASE + 'upload_image.php',
     customers: API_BASE + 'admin_customers.php',
     news: API_BASE + 'admin_news.php',
@@ -92,7 +93,7 @@ let adminCustomers = [];
 let adminNews = [];
 let adminContacts = [];
 const PRODUCT_BRAND_MAP = { '1': 'Honda', '2': 'Yamaha', '3': 'Ducati', '4': 'Suzuki', '5': 'Kawasaki' };
-const PRODUCT_CATEGORY_MAP = { '1': 'Xe Tay Ga', '2': 'Xe Số', '3': 'Xe Côn Tay', '4': 'Phân Khối Lớn' };
+let adminCategories = [];
 
 function setTextIfExists(id, value) {
     const element = document.getElementById(id);
@@ -130,11 +131,12 @@ function getNextEntityId(collection) {
 function getCurrentPage() {
     const path = window.location.pathname;
     if (path.includes('products.html')) return 'products';
+    if (path.includes('categories.html')) return 'categories';
     if (path.includes('orders.html')) return 'orders';
     if (path.includes('customers.html')) return 'customers';
     if (path.includes('news.html')) return 'news';
     if (path.includes('contacts.html')) return 'contacts';
-    if (path.includes('coupons.html')) return 'coupons';
+    if (path.includes('reports.html')) return 'reports';
     return 'index';
 }
 
@@ -232,8 +234,137 @@ function getStatusText(s) {
     return map[s] || s;
 }
 
+// =================== CATEGORIES ===================
+async function fetchAdminCategories() {
+    try {
+        const res = await fetch(ADMIN_API_URLS.categories);
+        const data = await res.json();
+        if (data.error) throw new Error(data.message);
+        adminCategories = Array.isArray(data) ? data : [];
+    } catch (err) {
+        adminCategories = [
+            { id: 1, name: 'Xe Tay Ga', slug: 'xe-tay-ga' },
+            { id: 2, name: 'Xe Số', slug: 'xe-so' },
+            { id: 3, name: 'Xe Côn Tay', slug: 'xe-con-tay' },
+            { id: 4, name: 'Phân Khối Lớn', slug: 'phan-khoi-lon' },
+            { id: 5, name: 'Xe Điện', slug: 'xe-dien' }
+        ];
+    }
+    populateProductCategorySelect();
+}
+
+function populateProductCategorySelect() {
+    const select = el('prod_category');
+    if (!select) return;
+    const current = select.value;
+    select.innerHTML = '<option value="">-- Chọn loại --</option>' +
+        adminCategories.map(c => `<option value="${c.id}">${escapeHTML(c.name)}</option>`).join('');
+    if (current) select.value = current;
+}
+
+async function loadCategories() {
+    await fetchAdminCategories();
+    renderCategoriesTable(adminCategories);
+}
+
+function renderCategoriesTable(categories) {
+    const tbody = el('categories-tbody');
+    if (!tbody) return;
+    if (!categories.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted">Chưa có danh mục nào</td></tr>';
+        return;
+    }
+    tbody.innerHTML = categories.map(c => `
+        <tr>
+            <td>${c.id}</td>
+            <td><strong>${escapeHTML(c.name)}</strong></td>
+            <td><code>${escapeHTML(c.slug)}</code></td>
+            <td>${c.product_count ?? 0}</td>
+            <td class="text-muted small">${escapeHTML((c.description || '').substring(0, 80))}${(c.description || '').length > 80 ? '…' : ''}</td>
+            <td>
+                <div class="d-flex gap-2">
+                    <button class="btn-action btn-edit" onclick="openEditCategory(${c.id})" title="Sửa"><i class="fas fa-pen"></i></button>
+                    <button class="btn-action btn-delete" onclick="deleteCategory(${c.id})" title="Xóa"><i class="fas fa-trash"></i></button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function openAddCategory() {
+    el('categoryModalTitle').textContent = 'Thêm Danh Mục';
+    el('cat_id').value = '';
+    el('cat_name').value = '';
+    el('cat_slug').value = '';
+    el('cat_desc').value = '';
+    new bootstrap.Modal(el('categoryModal')).show();
+}
+
+function openEditCategory(id) {
+    const c = adminCategories.find(x => x.id === id);
+    if (!c) return;
+    el('categoryModalTitle').textContent = 'Sửa Danh Mục';
+    el('cat_id').value = c.id;
+    el('cat_name').value = c.name;
+    el('cat_slug').value = c.slug;
+    el('cat_desc').value = c.description || '';
+    new bootstrap.Modal(el('categoryModal')).show();
+}
+
+async function saveCategoryForm() {
+    const id = el('cat_id').value;
+    const name = el('cat_name').value.trim();
+    if (!name) {
+        alert('Vui lòng nhập tên danh mục');
+        return;
+    }
+    const payload = {
+        name,
+        slug: el('cat_slug').value.trim() || slugify(name),
+        description: el('cat_desc').value.trim()
+    };
+    if (id) payload.id = parseInt(id, 10);
+
+    try {
+        const res = await fetch(ADMIN_API_URLS.categories, {
+            method: id ? 'PUT' : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.error) {
+            alert(data.message || 'Lỗi lưu danh mục');
+            return;
+        }
+        bootstrap.Modal.getInstance(el('categoryModal')).hide();
+        await loadCategories();
+    } catch (err) {
+        alert('Không thể kết nối API danh mục');
+    }
+}
+
+async function deleteCategory(id) {
+    if (!confirm('Xóa danh mục này? (Chỉ xóa được khi không còn sản phẩm)')) return;
+    try {
+        const res = await fetch(ADMIN_API_URLS.categories, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id })
+        });
+        const data = await res.json();
+        if (data.error) {
+            alert(data.message || 'Không thể xóa');
+            return;
+        }
+        await loadCategories();
+    } catch (err) {
+        alert('Lỗi kết nối');
+    }
+}
+
 // =================== PRODUCTS ===================
 async function loadProducts() {
+    await fetchAdminCategories();
     try {
         const res = await fetch(ADMIN_API_URLS.products);
         adminProducts = await res.json();
@@ -448,8 +579,7 @@ function getProductFormData() {
         slug: getInputValue('prod_slug') || slugify(nameValue),
         brand_id: parseInteger(brandIdValue, 0),
         brand: PRODUCT_BRAND_MAP[brandIdValue] || '',
-        category_id: parseInteger(categoryIdValue, 0),
-        category: PRODUCT_CATEGORY_MAP[categoryIdValue] || '',
+        category_id: parseInteger(categoryIdValue, 0) || null,
         price: parseNumber(getInputValue('prod_price')),
         sale_price: salePriceValue ? parseNumber(salePriceValue) : null,
         stock_quantity: parseInteger(getInputValue('prod_stock'), 0),
