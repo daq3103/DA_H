@@ -1,12 +1,12 @@
 /**
- * Main JavaScript cho MotoShop
+ * Main JavaScript cho motoShop
  * Xử lý giao diện, giỏ hàng local, và render sản phẩm
  */
 
-const { formatCurrency, fixImageUrlForStore: fixImageUrl, escapeHTML } = window.MotoShared || {};
+const { formatCurrency, fixImageUrlForStore: fixImageUrl, escapeHTML } = window.motoShared || {};
 
 if (typeof formatCurrency !== 'function' || typeof fixImageUrl !== 'function' || typeof escapeHTML !== 'function') {
-    throw new Error('MotoShared chưa được tải. Vui lòng include js/shared/moto-shared.js trước js/main.js');
+    throw new Error('motoShared chưa được tải. Vui lòng include js/shared/moto-shared.js trước js/main.js');
 }
 
 /** Hiển thị mô tả nhiều dòng (an toàn XSS) */
@@ -373,6 +373,26 @@ function renderNavCategories() {
     ).join('');
 }
 
+function showProductsLoadError(message) {
+    const detail = message || 'Không tải được sản phẩm từ server.';
+    const html = `
+        <div class="col-12 text-center py-5">
+            <div class="alert alert-danger d-inline-block text-start" style="max-width: 520px;">
+                <strong><i class="fas fa-database me-2"></i>Không hiển thị được sản phẩm</strong>
+                <p class="mb-2 small mt-2">${escapeHTML(detail)}</p>
+                <ul class="small mb-0 ps-3">
+                    <li>Bật <strong>Apache</strong> và <strong>MySQL</strong> trong XAMPP</li>
+                    <li>Mở site qua <code>http://localhost/shop/</code> (không mở file HTML trực tiếp)</li>
+                    <li>Kiểm tra <a href="api/db_status.php" target="_blank" rel="noopener">api/db_status.php</a></li>
+                    <li>Nếu DB trống: <a href="api/demo_seed.php" target="_blank" rel="noopener">api/demo_seed.php</a></li>
+                </ul>
+            </div>
+        </div>`;
+    document.querySelectorAll('#new-arrivals-container, #products-grid, #product-detail-container').forEach(el => {
+        if (el) el.innerHTML = html;
+    });
+}
+
 // Init storefront (được gọi từ main-bootstrap.js)
 window.motoInitStorefront = async function() {
     if (!guardCartPage()) return;
@@ -393,43 +413,64 @@ window.motoInitStorefront = async function() {
             fetch('api/get_products.php'),
             fetchCategories()
         ]);
-        if (productsRes.ok) {
-            productsData = await productsRes.json();
-            
-            if (productsData.error) {
-                console.error("Lỗi từ DB: ", productsData.message);
-                return;
-            }
+        const payload = await productsRes.json().catch(() => null);
 
-            renderCategoryFilters();
-            renderNavCategories();
+        if (!productsRes.ok || !payload) {
+            const errMsg = payload?.message || `HTTP ${productsRes.status}`;
+            console.error('Lỗi API sản phẩm:', errMsg);
+            showProductsLoadError(errMsg);
+            return;
+        }
 
-            // Init search sau khi có data
-            initSearch();
+        if (payload.error) {
+            const errMsg = payload.message || String(payload.error);
+            console.error('Lỗi từ DB:', errMsg);
+            showProductsLoadError(errMsg);
+            return;
+        }
 
-            // Gọi render khi có data
-            if (document.getElementById('new-arrivals-container')) renderHomeProducts();
-            if (document.getElementById('products-grid')) {
-                renderProductsPage();
-                initFilters();
-            }
-            if (document.getElementById('product-detail-container')) renderProductDetail();
-            if (document.getElementById('cart-items-container')) {
-                renderCartPage();
-                initCheckoutPaymentUi();
-                await syncCartStockFromServer();
-            }
+        if (!Array.isArray(payload)) {
+            showProductsLoadError('Dữ liệu sản phẩm không hợp lệ.');
+            return;
+        }
+
+        productsData = payload;
+
+        if (productsData.length === 0) {
+            showProductsLoadError('Database không có sản phẩm đang bán. Chạy demo_seed.php để nạp dữ liệu mẫu.');
+            return;
+        }
+
+        renderCategoryFilters();
+        renderNavCategories();
+        initSearch();
+
+        if (document.getElementById('new-arrivals-container')) renderHomeProducts();
+        if (document.getElementById('products-grid')) {
+            renderProductsPage();
+            initFilters();
+        }
+        if (document.getElementById('product-detail-container')) renderProductDetail();
+        if (document.getElementById('cart-items-container')) {
+            renderCartPage();
+            initCheckoutPaymentUi();
+            await syncCartStockFromServer();
         }
     } catch (error) {
-        console.error("Lỗi khi tải dữ liệu sản phẩm qua API:", error);
-        
-        // Cảnh báo thân thiện cho UX
-        const mains = document.querySelectorAll('#new-arrivals-container, #products-grid, #product-main-view');
-        mains.forEach(el => {
-            if(el) el.innerHTML = `<div class="col-12 text-center py-5 text-danger"><h5>Không thể kết nối CSDL MySQL. Bạn đã bật Apache & MySQL trên XAMPP chưa?</h5></div>`;
-        });
+        console.error('Lỗi khi tải dữ liệu sản phẩm qua API:', error);
+        showProductsLoadError('Không kết nối được API. Kiểm tra Apache/MySQL và URL localhost.');
     }
 };
+
+/** Sắp xếp sản phẩm: cập nhật mới nhất lên đầu */
+function sortProductsByUpdatedDesc(products) {
+    return [...products].sort((a, b) => {
+        const ta = new Date(a.updated_at || a.created_at || 0).getTime();
+        const tb = new Date(b.updated_at || b.created_at || 0).getTime();
+        if (tb !== ta) return tb - ta;
+        return (b.id || 0) - (a.id || 0);
+    });
+}
 
 function renderHomeProducts() {
     const newArrivalsContainer = document.getElementById('new-arrivals-container');
@@ -437,8 +478,8 @@ function renderHomeProducts() {
 
     if (!newArrivalsContainer || !hotSalesContainer) return;
 
-    const newProducts = productsData.filter(p => p.is_new).slice(0, 4);
-    const hotProducts = productsData.filter(p => p.is_hot).slice(0, 4);
+    const newProducts = sortProductsByUpdatedDesc(productsData.filter(p => p.is_new)).slice(0, 4);
+    const hotProducts = sortProductsByUpdatedDesc(productsData.filter(p => p.is_hot)).slice(0, 4);
 
     newArrivalsContainer.innerHTML = newProducts.map(p => createProductCardHTML(p)).join('');
     hotSalesContainer.innerHTML = hotProducts.map(p => createProductCardHTML(p)).join('');
@@ -1141,7 +1182,7 @@ function resetPaymentModal() {
 function buildPaymentQrText(amount, transferNote) {
     const amountStr = new Intl.NumberFormat('vi-VN').format(amount);
     return [
-        'MOTOSHOP - Thanh toan don hang',
+        'motoSHOP - Thanh toan don hang',
         `So tien: ${amountStr} VND`,
         `Noi dung: ${transferNote}`,
         'Ngan hang: Vietcombank (Demo)',
@@ -1152,7 +1193,7 @@ function buildPaymentQrText(amount, transferNote) {
 function openPaymentModal(checkoutData) {
     pendingCheckout = { ...checkoutData, paymentMethod: 'qr_transfer' };
     const total = checkoutData.totalAmount;
-    const transferNote = 'MOTOSHOP ' + Date.now().toString().slice(-6);
+    const transferNote = 'motoSHOP ' + Date.now().toString().slice(-6);
 
     const qrText = buildPaymentQrText(total, transferNote);
     const qrImg = document.getElementById('payment-qr-img');

@@ -1,15 +1,16 @@
 /**
- * Admin JavaScript - MotoShop
+ * Admin JavaScript - motoShop
  * Handles auth, dashboard stats, CRUD operations for products/orders/news/contacts/customers
  */
 
 const API_BASE = '../api/';
-const { formatCurrency, formatDateVN: formatDate, fixImageUrlForAdmin: fixImageUrl, escapeHTML } = window.MotoShared || {};
+const { formatCurrency, formatDateVN: formatDate, fixImageUrlForAdmin: fixImageUrl, escapeHTML } = window.motoShared || {};
 const el = (id) => document.getElementById(id);
 const onReady = (callback) => document.addEventListener('DOMContentLoaded', callback);
 const ADMIN_API_URLS = {
     stats: API_BASE + 'admin_stats.php',
     products: API_BASE + 'admin_products.php',
+    brands: API_BASE + 'admin_brands.php',
     categories: API_BASE + 'admin_categories.php',
     uploadImage: API_BASE + 'upload_image.php',
     customers: API_BASE + 'admin_customers.php',
@@ -22,7 +23,7 @@ if (
     typeof fixImageUrl !== 'function' ||
     typeof escapeHTML !== 'function'
 ) {
-    throw new Error('MotoShared chưa được tải. Vui lòng include ../js/shared/moto-shared.js trước ../js/admin.js');
+    throw new Error('motoShared chưa được tải. Vui lòng include ../js/shared/moto-shared.js trước ../js/admin.js');
 }
 
 // =================== AUTH ===================
@@ -59,11 +60,11 @@ const DEMO_PRODUCTS = [
 ];
 
 const DEMO_ORDERS = [
-    { id:1, customer_name:"Nguyễn Văn A", phone:"0912345678", address:"123 Cầu Diễn, HN", total_amount:48500000, status:"pending", order_date:"2026-03-15T10:30:00", notes:"Giao buổi sáng", items:[{product_name:"Honda Winner X 2024",quantity:1,unit_price:48500000}] },
-    { id:2, customer_name:"Trần Thị B", phone:"0987654321", address:"456 Láng Hạ, HN", total_amount:101000000, status:"contacted", order_date:"2026-03-14T14:20:00", notes:"", items:[{product_name:"Honda SH 160i 2024",quantity:1,unit_price:101000000}] },
-    { id:3, customer_name:"Lê Văn C", phone:"0901234567", address:"789 Kim Mã, HN", total_amount:51000000, status:"completed", order_date:"2026-03-12T09:00:00", notes:"Đã thanh toán", items:[{product_name:"Yamaha Exciter 155 VVA",quantity:1,unit_price:51000000}] },
-    { id:4, customer_name:"Phạm Thị D", phone:"0976543210", address:"321 Tây Hồ, HN", total_amount:35000000, status:"pending", order_date:"2026-03-16T16:45:00", notes:"Cần tư vấn thêm", items:[{product_name:"Honda Vision 2024",quantity:1,unit_price:35000000}] },
-    { id:5, customer_name:"Hoàng Văn E", phone:"0945678901", address:"654 Thanh Xuân, HN", total_amount:750000000, status:"cancelled", order_date:"2026-03-10T11:15:00", notes:"Khách hủy", items:[{product_name:"Ducati Panigale V4",quantity:1,unit_price:750000000}] }
+    { id:1, order_code:"HD1503-A1B2", customer_name:"Nguyễn Văn A", phone:"0912345678", address:"123 Cầu Diễn, HN", total_amount:48500000, status:"pending", payment_method:"cod", payment_status:"unpaid", order_date:"2026-03-15T10:30:00", notes:"Giao buổi sáng", items:[{product_id:1,product_name:"Honda Winner X 2024",quantity:1,unit_price:48500000}] },
+    { id:2, order_code:"HD1403-B2C3", customer_name:"Trần Thị B", phone:"0987654321", address:"456 Láng Hạ, HN", total_amount:101000000, status:"contacted", payment_method:"qr_transfer", payment_status:"paid", order_date:"2026-03-14T14:20:00", notes:"", items:[{product_id:3,product_name:"Honda SH 160i 2024",quantity:1,unit_price:101000000}] },
+    { id:3, order_code:"HD1203-C4D5", customer_name:"Lê Văn C", phone:"0901234567", address:"789 Kim Mã, HN", total_amount:51000000, status:"completed", payment_method:"cod", payment_status:"paid", order_date:"2026-03-12T09:00:00", notes:"Đã thu COD", items:[{product_id:2,product_name:"Yamaha Exciter 155 VVA",quantity:1,unit_price:51000000}] },
+    { id:4, order_code:"HD1603-D6E7", customer_name:"Phạm Thị D", phone:"0976543210", address:"321 Tây Hồ, HN", total_amount:35000000, status:"pending", payment_method:"qr_transfer", payment_status:"paid", order_date:"2026-03-16T16:45:00", notes:"Đã chuyển khoản QR", items:[{product_id:4,product_name:"Honda Vision 2024",quantity:1,unit_price:35000000}] },
+    { id:5, order_code:"HD1003-E8F9", customer_name:"Hoàng Văn E", phone:"0945678901", address:"654 Thanh Xuân, HN", total_amount:750000000, status:"cancelled", payment_method:"cod", payment_status:"unpaid", order_date:"2026-03-10T11:15:00", notes:"Khách hủy", items:[{product_id:6,product_name:"Ducati Panigale V4",quantity:1,unit_price:750000000}] }
 ];
 
 const DEMO_CUSTOMERS = [
@@ -75,9 +76,9 @@ const DEMO_CUSTOMERS = [
 ];
 
 const DEMO_NEWS = [
-    { id:1, title:"Honda ra mắt Winner X 2024 tại Việt Nam", slug:"honda-winner-x-2024-ra-mat", thumbnail_url:"https://images.unsplash.com/photo-1568772585407-9361f9bf3c87?q=80&w=400", author:"MotoShop", published_at:"2026-03-10", summary:"Honda Việt Nam vừa chính thức giới thiệu phiên bản mới của Winner X..." },
+    { id:1, title:"Honda ra mắt Winner X 2024 tại Việt Nam", slug:"honda-winner-x-2024-ra-mat", thumbnail_url:"https://images.unsplash.com/photo-1568772585407-9361f9bf3c87?q=80&w=400", author:"motoShop", published_at:"2026-03-10", summary:"Honda Việt Nam vừa chính thức giới thiệu phiên bản mới của Winner X..." },
     { id:2, title:"So sánh Exciter 155 vs Winner X: Đâu là lựa chọn tốt nhất?", slug:"so-sanh-exciter-winner", thumbnail_url:"https://images.unsplash.com/photo-1449426468159-d96dbf08f19f?q=80&w=400", author:"Admin", published_at:"2026-03-08", summary:"Hai mẫu xe côn tay bán chạy nhất Việt Nam..." },
-    { id:3, title:"Bảng giá xe máy Honda tháng 3/2026", slug:"bang-gia-honda-thang-3", thumbnail_url:"https://images.unsplash.com/photo-1558981403-c5f9899a28bc?q=80&w=400", author:"MotoShop", published_at:"2026-03-01", summary:"Cập nhật bảng giá mới nhất cho các dòng xe Honda..." }
+    { id:3, title:"Bảng giá xe máy Honda tháng 3/2026", slug:"bang-gia-honda-thang-3", thumbnail_url:"https://images.unsplash.com/photo-1558981403-c5f9899a28bc?q=80&w=400", author:"motoShop", published_at:"2026-03-01", summary:"Cập nhật bảng giá mới nhất cho các dòng xe Honda..." }
 ];
 
 const DEMO_CONTACTS = [
@@ -89,10 +90,10 @@ const DEMO_CONTACTS = [
 
 // State
 let adminProducts = [];
+let adminBrands = [];
 let adminCustomers = [];
 let adminNews = [];
 let adminContacts = [];
-const PRODUCT_BRAND_MAP = { '1': 'Honda', '2': 'Yamaha', '3': 'Ducati', '4': 'Suzuki', '5': 'Kawasaki' };
 let adminCategories = [];
 
 function setTextIfExists(id, value) {
@@ -199,7 +200,7 @@ function renderRecentOrders(orders) {
     }
     tbody.innerHTML = orders.map(o => `
         <tr>
-            <td><strong>#${o.id}</strong></td>
+            <td><strong>#${o.order_code || o.id}</strong></td>
             <td>${escapeHTML(o.customer_name || 'N/A')}</td>
             <td class="fw-bold">${formatCurrency(o.total_amount)}</td>
             <td><span class="status-badge ${o.status}">${getStatusText(o.status)}</span></td>
@@ -251,6 +252,31 @@ async function fetchAdminCategories() {
         ];
     }
     populateProductCategorySelect();
+}
+
+async function fetchAdminBrands() {
+    try {
+        const res = await fetch(ADMIN_API_URLS.brands);
+        const data = await res.json();
+        if (data.error) throw new Error(data.message);
+        adminBrands = Array.isArray(data) ? data : [];
+    } catch (err) {
+        adminBrands = [
+            { id: 1, name: 'Honda' },
+            { id: 2, name: 'Yamaha' },
+            { id: 3, name: 'Ducati' }
+        ];
+    }
+    populateProductBrandSelect();
+}
+
+function populateProductBrandSelect() {
+    const select = el('prod_brand');
+    if (!select) return;
+    const current = select.value;
+    select.innerHTML = '<option value="">-- Chọn hãng --</option>' +
+        adminBrands.map(b => `<option value="${b.id}">${escapeHTML(b.name)}</option>`).join('');
+    if (current) select.value = current;
 }
 
 function populateProductCategorySelect() {
@@ -364,6 +390,7 @@ async function deleteCategory(id) {
 
 // =================== PRODUCTS ===================
 async function loadProducts() {
+    await fetchAdminBrands();
     await fetchAdminCategories();
     try {
         const res = await fetch(ADMIN_API_URLS.products);
@@ -572,13 +599,14 @@ function getProductFormData() {
     const brandIdValue = getInputValue('prod_brand');
     const categoryIdValue = getInputValue('prod_category');
     const salePriceValue = getInputValue('prod_sale_price');
+    const selectedBrand = adminBrands.find(b => String(b.id) === String(brandIdValue));
 
     return {
         id: idValue ? parseInteger(idValue) : null,
         name: nameValue,
         slug: getInputValue('prod_slug') || slugify(nameValue),
         brand_id: parseInteger(brandIdValue, 0),
-        brand: PRODUCT_BRAND_MAP[brandIdValue] || '',
+        brand: selectedBrand ? selectedBrand.name : '',
         category_id: parseInteger(categoryIdValue, 0) || null,
         price: parseNumber(getInputValue('prod_price')),
         sale_price: salePriceValue ? parseNumber(salePriceValue) : null,

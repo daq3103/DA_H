@@ -26,6 +26,8 @@ try {
             p.main_image as image, 
             p.is_hot, 
             p.is_new,
+            p.created_at,
+            p.updated_at,
             b.name as brand,
             b.id as brand_id,
             c.name as category,
@@ -40,6 +42,7 @@ try {
         LEFT JOIN categories c ON p.category_id = c.id
         LEFT JOIN product_specs s ON p.id = s.product_id
         WHERE p.status = 'active'
+        ORDER BY p.updated_at DESC, p.id DESC
     ";
     
     $stmt = $pdo->query($sql);
@@ -64,6 +67,8 @@ try {
             "image" => $row['image'],
             "is_hot" => (bool)$row['is_hot'],
             "is_new" => (bool)$row['is_new'],
+            "created_at" => $row['created_at'],
+            "updated_at" => $row['updated_at'],
             "specs" => [
                 "engine_type" => $row['engine_type'],
                 "displacement" => $row['displacement'],
@@ -76,6 +81,10 @@ try {
     echo json_encode($products);
 
 } catch (Exception $e) {
-    echo json_encode(['error' => 'API Lỗi: ' . $e->getMessage()]);
+    http_response_code(500);
+    echo json_encode([
+        'error' => true,
+        'message' => 'API lỗi: ' . $e->getMessage()
+    ]);
 }
 ?>

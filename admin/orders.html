@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Lý Đơn Hàng - MotoShop Admin</title>
+    <title>Quản Lý Đơn Hàng - motoShop Admin</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -18,7 +18,7 @@
     <aside class="admin-sidebar" id="adminSidebar">
         <a href="index.html" class="sidebar-brand">
             <i class="fas fa-motorcycle"></i>
-            <div><span>MotoShop</span><small>Admin Panel</small></div>
+            <div><span>motoShop</span><small>Admin Panel</small></div>
         </a>
         <ul class="sidebar-nav">
             <li class="nav-label">Tổng quan</li>
@@ -107,11 +107,16 @@
             </div>
 
             <div class="admin-card">
-                <div class="admin-card-header">
-                    <h6><i class="fas fa-shopping-bag me-2 text-primary"></i>Tất Cả Đơn Hàng</h6>
-                    <div class="admin-search">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="searchOrder" placeholder="Tìm mã đơn, tên KH..." oninput="filterOrders()">
+                <div class="admin-card-header flex-wrap gap-2">
+                    <h6 class="mb-0"><i class="fas fa-shopping-bag me-2 text-primary"></i>Tất Cả Đơn Hàng</h6>
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <button type="button" class="btn btn-sm btn-admin-outline order-pay-filter active" data-pay-filter="all" onclick="filterOrdersByPayment('all')">Tất cả</button>
+                        <button type="button" class="btn btn-sm btn-admin-outline order-pay-filter" data-pay-filter="cod" onclick="filterOrdersByPayment('cod')">COD</button>
+                        <button type="button" class="btn btn-sm btn-admin-outline order-pay-filter" data-pay-filter="qr_transfer" onclick="filterOrdersByPayment('qr_transfer')">QR</button>
+                        <div class="admin-search" style="min-width:220px;">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="searchOrder" placeholder="Tìm mã đơn, tên KH..." oninput="filterOrders()">
+                        </div>
                     </div>
                 </div>
                 <div class="admin-card-body" style="overflow-x: auto;">
@@ -122,13 +127,15 @@
                                 <th>Khách hàng</th>
                                 <th>SĐT</th>
                                 <th>Tổng tiền</th>
-                                <th>Trạng thái</th>
+                                <th>Thanh toán</th>
+                                <th>TT thanh toán</th>
+                                <th>Trạng thái đơn</th>
                                 <th>Ngày đặt</th>
                                 <th>Hành động</th>
                             </tr>
                         </thead>
                         <tbody id="orders-tbody">
-                            <tr><td colspan="7" class="text-center text-muted py-4">Đang tải...</td></tr>
+                            <tr><td colspan="9" class="text-center text-muted py-4">Đang tải...</td></tr>
                         </tbody>
                     </table>
                 </div>

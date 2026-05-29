@@ -1,5 +1,5 @@
 /**
- * Shared utilities for MotoShop frontend/admin.
+ * Shared utilities for motoShop frontend/admin.
  * Keep this file framework-agnostic and side-effect free.
  */
 (function(global) {
@@ -43,7 +43,7 @@
             .replace(/'/g, '&#39;');
     }
 
-    global.MotoShared = {
+    global.motoShared = {
         formatCurrency,
         formatDateVN,
         fixImageUrlForStore,

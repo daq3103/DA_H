@@ -15,6 +15,16 @@ require 'db.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 
+function validateForeignId($pdo, $table, $id, $label) {
+    if ($id === null) return null;
+    $stmt = $pdo->prepare("SELECT id FROM {$table} WHERE id = ?");
+    $stmt->execute([$id]);
+    if (!$stmt->fetch()) {
+        throw new Exception($label . ' không tồn tại. Vui lòng chọn lại.');
+    }
+    return $id;
+}
+
 try {
     switch ($method) {
         case 'GET':
@@ -63,6 +73,8 @@ try {
             // Chuyển brand_id/category_id = 0 hoặc rỗng thành null (tránh lỗi FK)
             $brandId = !empty($data['brand_id']) ? (int)$data['brand_id'] : null;
             $categoryId = !empty($data['category_id']) ? (int)$data['category_id'] : null;
+            $brandId = validateForeignId($pdo, 'brands', $brandId, 'Hãng xe');
+            $categoryId = validateForeignId($pdo, 'categories', $categoryId, 'Danh mục');
             $stmt = $pdo->prepare("
                 INSERT INTO products (name, slug, brand_id, category_id, price, sale_price, stock_quantity, main_image, description, is_hot, is_new, status)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -92,6 +104,8 @@ try {
             $data = json_decode(file_get_contents('php://input'), true);
             $brandId = !empty($data['brand_id']) ? (int)$data['brand_id'] : null;
             $categoryId = !empty($data['category_id']) ? (int)$data['category_id'] : null;
+            $brandId = validateForeignId($pdo, 'brands', $brandId, 'Hãng xe');
+            $categoryId = validateForeignId($pdo, 'categories', $categoryId, 'Danh mục');
             $stmt = $pdo->prepare("
                 UPDATE products SET name=?, slug=?, brand_id=?, category_id=?, price=?, sale_price=?, stock_quantity=?, main_image=?, description=?, is_hot=?, is_new=?, status=?
                 WHERE id=?

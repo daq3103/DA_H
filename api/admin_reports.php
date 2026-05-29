@@ -60,30 +60,64 @@ try {
     $userWhere = str_replace('created_at', 'created_at', reportDateWhere($period));
     $newCustomers = (int)$pdo->query("SELECT COUNT(*) FROM users WHERE role = 'customer' AND $userWhere")->fetchColumn();
 
-    // Biểu đồ 7 ngày gần nhất (luôn hiển thị)
-    $chartRows = $pdo->query("
-        SELECT DATE(created_at) AS day,
-               COUNT(*) AS orders_count,
-               COALESCE(SUM(CASE WHEN status = 'completed' THEN total_amount ELSE 0 END), 0) AS revenue
-        FROM orders
-        WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
-        GROUP BY DATE(created_at)
-        ORDER BY day ASC
+    $orderWhere = str_replace('created_at', 'o.created_at', reportDateWhere($period));
+
+    // Thống kê đơn theo số điện thoại (trong kỳ)
+    $phoneRows = $pdo->query("
+        SELECT shipping_phone, shipping_name,
+               COUNT(*) AS order_count,
+               SUM(total_amount) AS total_amount,
+               SUM(CASE WHEN status = 'completed' THEN total_amount ELSE 0 END) AS completed_amount,
+               SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled_count
+        FROM orders o
+        WHERE $orderWhere
+        GROUP BY shipping_phone, shipping_name
+        ORDER BY order_count DESC, total_amount DESC
     ")->fetchAll(PDO::FETCH_ASSOC);
 
-    $chartMap = [];
-    foreach ($chartRows as $row) {
-        $chartMap[$row['day']] = $row;
+    $salesByPhone = [];
+    foreach ($phoneRows as $row) {
+        $salesByPhone[] = [
+            'phone' => $row['shipping_phone'],
+            'name' => $row['shipping_name'],
+            'order_count' => (int)$row['order_count'],
+            'total_amount' => (float)$row['total_amount'],
+            'completed_amount' => (float)$row['completed_amount'],
+            'cancelled_count' => (int)$row['cancelled_count']
+        ];
     }
 
-    $chart = [];
-    for ($i = 6; $i >= 0; $i--) {
-        $day = date('Y-m-d', strtotime("-$i days"));
-        $chart[] = [
-            'date' => $day,
-            'label' => date('d/m', strtotime($day)),
-            'orders_count' => isset($chartMap[$day]) ? (int)$chartMap[$day]['orders_count'] : 0,
-            'revenue' => isset($chartMap[$day]) ? (float)$chartMap[$day]['revenue'] : 0
+    // Mã SP bán được trong kỳ (không tính đơn đã hủy)
+    $productRows = $pdo->query("
+        SELECT COALESCE(oi.product_id, 0) AS product_id,
+               COALESCE(p.name, CONCAT('SP #', oi.product_id)) AS product_name,
+               p.slug AS product_slug,
+               b.name AS brand,
+               SUM(oi.quantity) AS qty_sold,
+               SUM(oi.quantity * oi.unit_price) AS revenue,
+               COUNT(DISTINCT oi.order_id) AS order_count
+        FROM order_items oi
+        INNER JOIN orders o ON oi.order_id = o.id
+        LEFT JOIN products p ON oi.product_id = p.id
+        LEFT JOIN brands b ON p.brand_id = b.id
+        WHERE $orderWhere AND o.status != 'cancelled'
+        GROUP BY oi.product_id, p.name, p.slug, b.name
+        ORDER BY qty_sold DESC, revenue DESC
+    ")->fetchAll(PDO::FETCH_ASSOC);
+
+    $salesByProduct = [];
+    $totalUnitsSold = 0;
+    foreach ($productRows as $row) {
+        $qty = (int)$row['qty_sold'];
+        $totalUnitsSold += $qty;
+        $salesByProduct[] = [
+            'product_id' => (int)$row['product_id'],
+            'name' => $row['product_name'],
+            'slug' => $row['product_slug'],
+            'brand' => $row['brand'],
+            'qty_sold' => $qty,
+            'revenue' => (float)$row['revenue'],
+            'order_count' => (int)$row['order_count']
         ];
     }
 
@@ -138,7 +172,9 @@ try {
         'orders_cancelled' => $ordersCancelled,
         'revenue' => $revenue,
         'new_customers' => $newCustomers,
-        'chart_7days' => $chart,
+        'total_units_sold' => $totalUnitsSold,
+        'sales_by_phone' => $salesByPhone,
+        'sales_by_product' => $salesByProduct,
         'stock_summary' => [
             'total_products' => count($stockInventory),
             'total_units' => $totalUnits,

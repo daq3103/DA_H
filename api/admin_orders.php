@@ -27,13 +27,24 @@ try {
             // Attach items for each order
             foreach ($orders as &$order) {
                 $stmt = $pdo->prepare("
-                    SELECT oi.*, p.name as product_name
+                    SELECT oi.product_id, oi.quantity, oi.unit_price,
+                           COALESCE(p.id, oi.product_id) AS product_id,
+                           p.name AS product_name
                     FROM order_items oi
                     LEFT JOIN products p ON oi.product_id = p.id
                     WHERE oi.order_id = ?
                 ");
                 $stmt->execute([$order['id']]);
-                $order['items'] = $stmt->fetchAll();
+                $items = [];
+                foreach ($stmt->fetchAll() as $row) {
+                    $items[] = [
+                        'product_id' => (int)$row['product_id'],
+                        'product_name' => $row['product_name'] ?: ('Sản phẩm #' . $row['product_id']),
+                        'quantity' => (int)$row['quantity'],
+                        'unit_price' => (float)$row['unit_price']
+                    ];
+                }
+                $order['items'] = $items;
                 $order['total_amount'] = (float)$order['total_amount'];
                 $order['order_date'] = $order['created_at'];
             }
@@ -43,17 +54,22 @@ try {
 
         case 'PUT':
             $data = json_decode(file_get_contents('php://input'), true);
-            $newStatus = $data['status'];
-            $orderId = $data['id'];
+            $orderId = (int)($data['id'] ?? 0);
+            if ($orderId <= 0) {
+                throw new Exception('Thiếu id đơn hàng');
+            }
 
-            // Lấy trạng thái hiện tại của đơn hàng
-            $stmtOldStatus = $pdo->prepare("SELECT status FROM orders WHERE id = ?");
-            $stmtOldStatus->execute([$orderId]);
-            $oldOrder = $stmtOldStatus->fetch();
+            $stmtOrder = $pdo->prepare("SELECT status, payment_method, payment_status FROM orders WHERE id = ?");
+            $stmtOrder->execute([$orderId]);
+            $order = $stmtOrder->fetch();
+            if (!$order) {
+                throw new Exception('Không tìm thấy đơn hàng');
+            }
 
-            if ($oldOrder) {
-                $oldStatus = $oldOrder['status'];
+            $oldStatus = $order['status'];
+            $newStatus = $data['status'] ?? $oldStatus;
 
+            if (isset($data['status'])) {
                 // Nếu chuyển từ trạng thái KHÁC sang CANCELLED -> Hoàn kho
                 if ($oldStatus !== 'cancelled' && $newStatus === 'cancelled') {
                     $stmtItems = $pdo->prepare("SELECT product_id, quantity FROM order_items WHERE order_id = ?");
@@ -81,10 +97,26 @@ try {
                         }
                     }
                 }
+
+                $stmt = $pdo->prepare("UPDATE orders SET status = ? WHERE id = ?");
+                $stmt->execute([$newStatus, $orderId]);
+
+                // COD hoàn thành -> tự đánh dấu đã thu tiền
+                if ($newStatus === 'completed' && $order['payment_method'] === 'cod' && $order['payment_status'] !== 'paid') {
+                    $pdo->prepare("UPDATE orders SET payment_status = 'paid' WHERE id = ?")->execute([$orderId]);
+                    $order['payment_status'] = 'paid';
+                }
             }
 
-            $stmt = $pdo->prepare("UPDATE orders SET status = ? WHERE id = ?");
-            $stmt->execute([$newStatus, $orderId]);
+            if (isset($data['payment_status']) && in_array($data['payment_status'], ['paid', 'unpaid'], true)) {
+                $method = $order['payment_method'] ?? 'cod';
+                if ($data['payment_status'] === 'paid') {
+                    $pdo->prepare("UPDATE orders SET payment_status = 'paid' WHERE id = ?")->execute([$orderId]);
+                } elseif ($method === 'cod' && $data['payment_status'] === 'unpaid') {
+                    $pdo->prepare("UPDATE orders SET payment_status = 'unpaid' WHERE id = ?")->execute([$orderId]);
+                }
+            }
+
             echo json_encode(['success' => true]);
             break;
     }

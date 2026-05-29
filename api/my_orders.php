@@ -35,15 +35,27 @@ try {
 
     // Lấy chi tiết sản phẩm cho mỗi đơn
     $stmtItems = $pdo->prepare("
-        SELECT oi.quantity, oi.unit_price, p.id as product_id, p.name, p.main_image
-        FROM order_items oi 
+        SELECT oi.product_id, oi.quantity, oi.unit_price,
+               COALESCE(p.id, oi.product_id) AS product_id,
+               p.name, p.main_image
+        FROM order_items oi
         LEFT JOIN products p ON oi.product_id = p.id
         WHERE oi.order_id = ?
     ");
 
     foreach ($orders as &$order) {
         $stmtItems->execute([$order['id']]);
-        $order['items'] = $stmtItems->fetchAll();
+        $items = [];
+        foreach ($stmtItems->fetchAll() as $item) {
+            $items[] = [
+                'product_id' => (int)$item['product_id'],
+                'name' => $item['name'],
+                'main_image' => $item['main_image'],
+                'quantity' => (int)$item['quantity'],
+                'unit_price' => (int)$item['unit_price']
+            ];
+        }
+        $order['items'] = $items;
         $order['total_amount'] = (int)$order['total_amount'];
     }
 

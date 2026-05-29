@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Báo Cáo Thống Kê - MotoShop Admin</title>
+    <title>Báo Cáo Thống Kê - motoShop Admin</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -18,7 +18,7 @@
     <aside class="admin-sidebar" id="adminSidebar">
         <a href="index.html" class="sidebar-brand">
             <i class="fas fa-motorcycle"></i>
-            <div><span>MotoShop</span><small>Admin Panel</small></div>
+            <div><span>motoShop</span><small>Admin Panel</small></div>
         </a>
         <ul class="sidebar-nav">
             <li class="nav-label">Tổng quan</li>
@@ -122,6 +122,65 @@
                 </div>
             </div>
 
+            <!-- Mã SP bán trong kỳ -->
+            <div class="admin-card mb-4">
+                <div class="admin-card-header flex-wrap gap-2">
+                    <h6 class="mb-0"><i class="fas fa-barcode me-2 text-primary"></i>Mã Sản Phẩm Bán Được</h6>
+                    <span class="badge bg-light text-dark border" id="report-units-sold-badge">0 xe đã bán</span>
+                </div>
+                <div class="admin-card-body">
+                    <p class="text-muted small mb-3">Theo kỳ đang chọn (ví dụ <strong>Hôm nay</strong> = trong 24h). Không tính đơn đã hủy.</p>
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Mã SP</th>
+                                    <th>Tên xe</th>
+                                    <th>Hãng</th>
+                                    <th class="text-center">SL bán</th>
+                                    <th class="text-center">Số đơn</th>
+                                    <th class="text-end">Doanh thu</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sales-product-tbody">
+                                <tr><td colspan="6" class="text-center text-muted py-4">Đang tải...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Đơn hàng theo SĐT -->
+            <div class="admin-card mb-4">
+                <div class="admin-card-header flex-wrap gap-2">
+                    <h6 class="mb-0"><i class="fas fa-phone me-2 text-success"></i>Đơn Hàng Theo Số Điện Thoại</h6>
+                    <div class="admin-search" style="max-width: 260px;">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchReportPhone" placeholder="Lọc SĐT, tên KH..." oninput="filterSalesByPhone()">
+                    </div>
+                </div>
+                <div class="admin-card-body">
+                    <p class="text-muted small mb-3">Gom theo SĐT người đặt trong kỳ. Bấm <strong>Hôm nay</strong> để xem đơn mua trong 1 ngày.</p>
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Số điện thoại</th>
+                                    <th>Khách hàng</th>
+                                    <th class="text-center">Số đơn</th>
+                                    <th class="text-center">Đã hủy</th>
+                                    <th class="text-end">Tổng giá trị</th>
+                                    <th class="text-end">Đã hoàn thành</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sales-phone-tbody">
+                                <tr><td colspan="6" class="text-center text-muted py-4">Đang tải...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
             <!-- Thống kê tồn kho theo mã sản phẩm -->
             <div class="admin-card mb-4">
                 <div class="admin-card-header flex-wrap gap-2">
@@ -177,17 +236,6 @@
                             </tbody>
                         </table>
                     </div>
-                </div>
-            </div>
-
-            <!-- Biểu đồ 7 ngày -->
-            <div class="admin-card">
-                <div class="admin-card-header">
-                    <h6><i class="fas fa-chart-column me-2 text-primary"></i>Đơn hàng 7 ngày gần nhất</h6>
-                </div>
-                <div class="admin-card-body">
-                    <p class="text-muted small mb-3">Di chuột vào cột để xem doanh thu từng ngày (đơn hoàn thành).</p>
-                    <div id="report-chart-bars" class="report-chart"></div>
                 </div>
             </div>
         </div>

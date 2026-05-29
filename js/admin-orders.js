@@ -1,5 +1,7 @@
 // =================== ORDERS ===================
+const { escapeHTML, formatCurrency, formatDate } = window.MotoShared || {};
 let adminOrders = [];
+let paymentFilter = 'all';
 const ORDER_API_URL = API_BASE + 'admin_orders.php';
 const ORDER_STATUS_KEYS = ['pending', 'contacted', 'completed', 'cancelled'];
 const ORDER_STAT_FIELD_IDS = {
@@ -10,6 +12,52 @@ const ORDER_STAT_FIELD_IDS = {
 };
 const DEFAULT_TEXT = '—';
 
+function getPaymentMethodLabel(method) {
+    if (method === 'qr_transfer') return 'Chuyển khoản QR';
+    return 'COD (khi nhận hàng)';
+}
+
+function getPaymentMethodBadgeClass(method) {
+    return method === 'qr_transfer' ? 'pay-qr' : 'pay-cod';
+}
+
+function getPaymentStatusLabel(status, method) {
+    if (status === 'paid') {
+        return method === 'qr_transfer' ? 'Đã thanh toán (QR)' : 'Đã thu tiền (COD)';
+    }
+    return method === 'qr_transfer' ? 'Chờ xác nhận QR' : 'Chưa thu tiền';
+}
+
+function getPaymentStatusBadgeClass(status) {
+    return status === 'paid' ? 'pay-paid' : 'pay-unpaid';
+}
+
+function isQrOrder(order) {
+    return order.payment_method === 'qr_transfer';
+}
+
+function renderPaymentStatusCell(order) {
+    const paid = order.payment_status === 'paid';
+    const badge = `<span class="status-badge ${getPaymentStatusBadgeClass(order.payment_status)}">${getPaymentStatusLabel(order.payment_status, order.payment_method)}</span>`;
+
+    if (isQrOrder(order)) {
+        return badge;
+    }
+
+    if (paid) {
+        return badge;
+    }
+
+    return `
+        <div class="d-flex flex-column gap-1" style="min-width:130px;">
+            ${badge}
+            <button type="button" class="btn btn-sm btn-success" style="font-size:0.72rem;padding:2px 8px;" onclick="confirmCodPayment(${order.id})">
+                <i class="fas fa-money-bill-wave me-1"></i>Xác nhận thu tiền
+            </button>
+        </div>
+    `;
+}
+
 async function loadOrders() {
     try {
         const res = await fetch(ORDER_API_URL);
@@ -18,7 +66,7 @@ async function loadOrders() {
     } catch (err) {
         adminOrders = [...DEMO_ORDERS];
     }
-    renderOrdersTable(adminOrders);
+    renderOrdersTable(getFilteredOrders());
     updateOrderStats();
 }
 
@@ -38,7 +86,7 @@ function updateOrderStats() {
     }, {});
 
     adminOrders.forEach(order => {
-        if (stats[order.status] !== undefined) stats[order.status] += 1;
+        if (stats[order.status] !== undefined) stats[status] += 1;
     });
 
     ORDER_STATUS_KEYS.forEach(status => {
@@ -46,21 +94,44 @@ function updateOrderStats() {
     });
 }
 
+function getFilteredOrders() {
+    const q = (document.getElementById('searchOrder')?.value || '').toLowerCase();
+    return adminOrders.filter(o => {
+        const matchSearch = !q ||
+            o.customer_name.toLowerCase().includes(q) ||
+            String(o.id).includes(q) ||
+            (o.order_code && o.order_code.toLowerCase().includes(q));
+        const method = o.payment_method === 'qr_transfer' ? 'qr_transfer' : 'cod';
+        const matchPay = paymentFilter === 'all' || method === paymentFilter;
+        return matchSearch && matchPay;
+    });
+}
+
+function filterOrdersByPayment(type) {
+    paymentFilter = type;
+    document.querySelectorAll('.order-pay-filter').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.payFilter === type);
+    });
+    renderOrdersTable(getFilteredOrders());
+}
+
 function renderOrdersTable(orders) {
     const tbody = document.getElementById('orders-tbody');
     if (!tbody) return;
     if (orders.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="empty-state"><i class="fas fa-shopping-bag d-block"></i><h5>Chưa có đơn hàng nào</h5></div></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-5"><div class="empty-state"><i class="fas fa-shopping-bag d-block"></i><h5>Chưa có đơn hàng nào</h5></div></td></tr>';
         return;
     }
     tbody.innerHTML = orders.map(o => `
         <tr>
-            <td><strong>#${o.id}</strong></td>
-            <td>${o.customer_name}</td>
+            <td><strong>#${o.order_code || o.id}</strong></td>
+            <td>${escapeHTML(o.customer_name)}</td>
             <td>${o.phone || '—'}</td>
             <td class="fw-bold">${formatCurrency(o.total_amount)}</td>
+            <td><span class="status-badge ${getPaymentMethodBadgeClass(o.payment_method)}">${getPaymentMethodLabel(o.payment_method)}</span></td>
+            <td>${renderPaymentStatusCell(o)}</td>
             <td>
-                <select class="form-select form-select-sm" style="width:140px;font-size:0.78rem;border-radius:8px;" onchange="updateOrderStatus(${o.id}, this.value)">
+                <select class="form-select form-select-sm" style="width:140px;font-size:0.78rem;border-radius:8px;" onchange="updateOrderStatus(${o.id}, this.value)" ${o.status === 'cancelled' ? 'disabled' : ''}>
                     <option value="pending" ${o.status==='pending'?'selected':''}>Chờ xử lý</option>
                     <option value="contacted" ${o.status==='contacted'?'selected':''}>Đã liên hệ</option>
                     <option value="completed" ${o.status==='completed'?'selected':''}>Hoàn thành</option>
@@ -76,22 +147,38 @@ function renderOrdersTable(orders) {
 }
 
 function filterOrders() {
-    const q = document.getElementById('searchOrder').value.toLowerCase();
-    const filtered = adminOrders.filter(o => o.customer_name.toLowerCase().includes(q) || String(o.id).includes(q));
-    renderOrdersTable(filtered);
+    renderOrdersTable(getFilteredOrders());
 }
 
-async function updateOrderStatus(id, newStatus) {
+async function patchOrder(id, payload) {
     try {
         await fetch(ORDER_API_URL, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id, status: newStatus })
+            body: JSON.stringify({ id, ...payload })
         });
     } catch (err) { /* demo */ }
+}
+
+async function updateOrderStatus(id, newStatus) {
+    await patchOrder(id, { status: newStatus });
     const order = getOrderById(id);
-    if (order) order.status = newStatus;
+    if (order) {
+        order.status = newStatus;
+        if (newStatus === 'completed' && !isQrOrder(order) && order.payment_status !== 'paid') {
+            order.payment_status = 'paid';
+        }
+    }
+    renderOrdersTable(getFilteredOrders());
     updateOrderStats();
+}
+
+async function confirmCodPayment(id) {
+    if (!confirm('Xác nhận đã thu tiền COD từ khách hàng?')) return;
+    await patchOrder(id, { payment_status: 'paid' });
+    const order = getOrderById(id);
+    if (order) order.payment_status = 'paid';
+    renderOrdersTable(getFilteredOrders());
 }
 
 let currentViewOrderId = null;
@@ -100,31 +187,45 @@ function viewOrderDetail(id) {
     const o = getOrderById(id);
     if (!o) return;
     currentViewOrderId = id;
-    document.getElementById('order-detail-id').textContent = '#' + o.id;
+    const payHint = isQrOrder(o)
+        ? 'Khách đã thanh toán qua QR khi đặt hàng — ưu tiên xử lý giao hàng.'
+        : (o.payment_status === 'paid'
+            ? 'Đã thu tiền COD — có thể hoàn tất đơn.'
+            : 'Chưa thu tiền — xác nhận thu tiền khi giao hàng hoặc khi hoàn thành đơn.');
+
+    document.getElementById('order-detail-id').textContent = '#' + (o.order_code || o.id);
     document.getElementById('order-detail-body').innerHTML = `
         <div class="row g-3">
             <div class="col-md-6">
                 <h6 class="fw-bold mb-3"><i class="fas fa-user me-2"></i>Thông tin khách hàng</h6>
-                <p class="mb-1"><strong>Họ tên:</strong> ${o.customer_name}</p>
+                <p class="mb-1"><strong>Họ tên:</strong> ${escapeHTML(o.customer_name)}</p>
                 <p class="mb-1"><strong>SĐT:</strong> ${o.phone || DEFAULT_TEXT}</p>
-                <p class="mb-1"><strong>Địa chỉ:</strong> ${o.address || DEFAULT_TEXT}</p>
-                <p class="mb-0"><strong>Ghi chú:</strong> ${o.notes || 'Không có'}</p>
+                <p class="mb-1"><strong>Địa chỉ:</strong> ${escapeHTML(o.address || DEFAULT_TEXT)}</p>
+                <p class="mb-0"><strong>Ghi chú:</strong> ${escapeHTML(o.notes || 'Không có')}</p>
             </div>
             <div class="col-md-6">
                 <h6 class="fw-bold mb-3"><i class="fas fa-info-circle me-2"></i>Thông tin đơn hàng</h6>
-                <p class="mb-1"><strong>Mã đơn:</strong> #${o.id}</p>
+                <p class="mb-1"><strong>Mã đơn:</strong> #${o.order_code || o.id}</p>
                 <p class="mb-1"><strong>Ngày đặt:</strong> ${formatDate(o.order_date)}</p>
                 <p class="mb-1"><strong>Tổng tiền:</strong> <span class="text-danger fw-bold">${formatCurrency(o.total_amount)}</span></p>
-                <p class="mb-0"><strong>Trạng thái:</strong> <span class="status-badge ${o.status}">${getStatusText(o.status)}</span></p>
+                <p class="mb-1"><strong>Phương thức:</strong> <span class="status-badge ${getPaymentMethodBadgeClass(o.payment_method)}">${getPaymentMethodLabel(o.payment_method)}</span></p>
+                <p class="mb-1"><strong>Thanh toán:</strong> <span class="status-badge ${getPaymentStatusBadgeClass(o.payment_status)}">${getPaymentStatusLabel(o.payment_status, o.payment_method)}</span></p>
+                <p class="mb-1"><strong>Trạng thái đơn:</strong> <span class="status-badge ${o.status}">${getStatusText(o.status)}</span></p>
+                <p class="mb-0 small text-muted"><i class="fas fa-lightbulb me-1"></i>${payHint}</p>
+                ${!isQrOrder(o) && o.payment_status !== 'paid' && o.status !== 'cancelled' ? `
+                <button type="button" class="btn btn-sm btn-success mt-2" onclick="confirmCodPayment(${o.id}); bootstrap.Modal.getInstance(document.getElementById('orderDetailModal'))?.hide();">
+                    <i class="fas fa-money-bill-wave me-1"></i>Xác nhận thu tiền COD
+                </button>` : ''}
             </div>
             <div class="col-12">
                 <h6 class="fw-bold mb-3 mt-2"><i class="fas fa-list me-2"></i>Sản phẩm trong đơn</h6>
                 <table class="admin-table">
-                    <thead><tr><th>Sản phẩm</th><th>Số lượng</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead>
+                    <thead><tr><th>Mã SP</th><th>Sản phẩm</th><th>Số lượng</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead>
                     <tbody>
                         ${(o.items || []).map(i => `
                             <tr>
-                                <td>${i.product_name}</td>
+                                <td><strong>#${i.product_id || '—'}</strong></td>
+                                <td>${escapeHTML(i.product_name || '—')}</td>
                                 <td>${i.quantity}</td>
                                 <td>${formatCurrency(i.unit_price)}</td>
                                 <td class="fw-bold">${formatCurrency(i.quantity * i.unit_price)}</td>
@@ -146,6 +247,7 @@ function printAdminInvoice() {
     let printWindow = window.open('', '_blank');
     let itemsHtml = (o.items || []).map(i => `
         <tr>
+            <td style="padding: 8px; border: 1px solid #ddd;">#${i.product_id || '—'}</td>
             <td style="padding: 8px; border: 1px solid #ddd;">${i.product_name}</td>
             <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${i.quantity}</td>
             <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${formatCurrency(i.unit_price)}</td>
@@ -158,7 +260,7 @@ function printAdminInvoice() {
         <html lang="vi">
         <head>
             <meta charset="UTF-8">
-            <title>Hóa Đơn #${o.id}</title>
+            <title>Hóa Đơn #${o.order_code || o.id}</title>
             <style>
                 body { font-family: 'Arial', sans-serif; padding: 40px; color: #333; line-height: 1.6; max-width: 800px; margin: 0 auto; }
                 .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 20px; }
@@ -181,7 +283,7 @@ function printAdminInvoice() {
         <body>
             <div class="header">
                 <h1>HÓA ĐƠN BÁN HÀNG</h1>
-                <p>MotoShop - Cửa hàng xe máy chính hãng</p>
+                <p>motoShop - Cửa hàng xe máy chính hãng</p>
             </div>
             
             <div class="info-section">
@@ -193,8 +295,9 @@ function printAdminInvoice() {
                 </div>
                 <div class="info-box">
                     <h3>Thông tin đơn hàng</h3>
-                    <p><strong>Mã Đơn:</strong> #${o.id}</p>
+                    <p><strong>Mã Đơn:</strong> #${o.order_code || o.id}</p>
                     <p><strong>Ngày lập:</strong> ${formatDate(o.order_date)}</p>
+                    <p><strong>Thanh toán:</strong> ${getPaymentMethodLabel(o.payment_method)} — ${getPaymentStatusLabel(o.payment_status, o.payment_method)}</p>
                     <p><strong>Nhân viên:</strong> In từ hệ thống</p>
                 </div>
             </div>
@@ -202,6 +305,7 @@ function printAdminInvoice() {
             <table>
                 <thead>
                     <tr>
+                        <th>Mã SP</th>
                         <th>Tên sản phẩm</th>
                         <th style="text-align: center; width: 100px;">Số lượng</th>
                         <th style="text-align: right; width: 150px;">Đơn giá</th>
@@ -218,7 +322,7 @@ function printAdminInvoice() {
             </div>
 
             <div class="footer">
-                <p>Cảm ơn quý khách đã mua hàng tại MotoShop!</p>
+                <p>Cảm ơn quý khách đã mua hàng tại motoShop!</p>
             </div>
             
             <script>

@@ -23,13 +23,6 @@ CREATE TABLE categories (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
-INSERT INTO categories (name, slug, description) VALUES
-('Xe Tay Ga', 'xe-tay-ga', 'Dòng xe tay ga phổ biến'),
-('Xe Số', 'xe-so', 'Xe số tiết kiệm nhiên liệu'),
-('Xe Côn Tay', 'xe-con-tay', 'Xe côn tay thể thao'),
-('Phân Khối Lớn', 'phan-khoi-lon', 'PKL, sportbike cao cấp'),
-('Xe Điện', 'xe-dien', 'Xe máy điện, xăng lai');
-
 -- 3. Bảng Sản phẩm (Xe máy)
 CREATE TABLE products (
     id INT AUTO_INCREMENT PRIMARY KEY,
