@@ -95,19 +95,26 @@
             const isCod = order.payment_method === 'cod' || !order.payment_method || order.payment_method === 'cod';
 
             if (st === 'cancelled') {
-                return { badges: [statusMap.cancelled], canCancel: false, hint: null, paymentLabel: getPaymentMethodLabel(order.payment_method) };
+                return {
+                    badges: [statusMap.cancelled],
+                    canCancel: false,
+                    canPrintInvoice: false,
+                    hint: 'Đơn đã hủy — không thể in hóa đơn.',
+                    paymentLabel: getPaymentMethodLabel(order.payment_method)
+                };
             }
             if (st === 'completed') {
-                return { badges: [statusMap.completed], canCancel: false, hint: null, paymentLabel: getPaymentMethodLabel(order.payment_method) };
+                return { badges: [statusMap.completed], canCancel: false, canPrintInvoice: true, hint: null, paymentLabel: getPaymentMethodLabel(order.payment_method) };
             }
             if (st === 'contacted') {
-                return { badges: [statusMap.contacted], canCancel: false, hint: null, paymentLabel: getPaymentMethodLabel(order.payment_method) };
+                return { badges: [statusMap.contacted], canCancel: false, canPrintInvoice: paid, hint: paid ? null : 'In hóa đơn sau khi thanh toán.', paymentLabel: getPaymentMethodLabel(order.payment_method) };
             }
 
             if (paid) {
                 return {
                     badges: [{ text: 'Đã thanh toán', class: 'status-paid' }],
                     canCancel: false,
+                    canPrintInvoice: true,
                     hint: 'Đơn đang được cửa hàng xử lý. Cần đổi/hủy sau thanh toán, vui lòng <a href="contact.html">liên hệ motoShop</a>.',
                     paymentLabel: 'Chuyển khoản QR'
                 };
@@ -117,7 +124,8 @@
                 return {
                     badges: [{ text: 'Thanh toán khi nhận', class: 'status-unpaid' }, statusMap.pending],
                     canCancel: st === 'pending',
-                    hint: 'Thanh toán trực tiếp khi nhận xe. Bạn có thể hủy đơn khi shop chưa xử lý.',
+                    canPrintInvoice: false,
+                    hint: 'Thanh toán trực tiếp khi nhận xe. Bạn có thể hủy đơn khi shop chưa xử lý. Hóa đơn in sau khi shop xác nhận thanh toán.',
                     paymentLabel: 'Thanh toán khi nhận hàng'
                 };
             }
@@ -125,6 +133,7 @@
             return {
                 badges: [statusMap.pending],
                 canCancel: true,
+                canPrintInvoice: false,
                 hint: 'Bạn có thể hủy đơn trước khi xác nhận thanh toán.',
                 paymentLabel: getPaymentMethodLabel(order.payment_method)
             };
@@ -210,9 +219,10 @@
                                 ${hintBlock}
                                 <div class="order-actions-bar mt-3">
                                     ${cancelBtn}
+                                    ${ui.canPrintInvoice ? `
                                     <button type="button" class="btn btn-sm btn-outline-primary rounded-pill" onclick="printCustomerInvoice(${order.id})">
                                         <i class="fas fa-print me-1"></i> In hóa đơn
-                                    </button>
+                                    </button>` : ''}
                                 </div>
                             </div>
                         </div>`;
@@ -274,9 +284,23 @@
             }
         }
 
+        function canPrintOrderInvoice(order) {
+            if (!order) return false;
+            if ((order.status || '') === 'cancelled') return false;
+            return order.payment_status === 'paid' || order.status === 'completed';
+        }
+
         function printCustomerInvoice(orderId) {
             const o = userOrdersList.find(x => x.id === orderId);
             if (!o) return;
+            if (!canPrintOrderInvoice(o)) {
+                const msg = o.status === 'cancelled'
+                    ? 'Đơn đã hủy, không thể in hóa đơn.'
+                    : 'Chỉ in hóa đơn khi đơn đã thanh toán hoặc hoàn thành.';
+                if (typeof showToast === 'function') showToast(msg, 'warning');
+                else alert(msg);
+                return;
+            }
             
             const date = new Date(o.created_at).toLocaleDateString('vi-VN', {
                 day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'

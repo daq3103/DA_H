@@ -27,6 +27,7 @@
             <li class="nav-label">Quản lý</li>
             <li><a href="products.html"><i class="fas fa-motorcycle"></i> Sản phẩm</a></li>
             <li><a href="categories.html"><i class="fas fa-tags"></i> Danh mục</a></li>
+            <li><a href="brands.html"><i class="fas fa-industry"></i> Hãng xe</a></li>
             <li><a href="orders.html" class="active"><i class="fas fa-shopping-bag"></i> Đơn hàng</a></li>
             <li><a href="customers.html"><i class="fas fa-users"></i> Khách hàng</a></li>
             <li class="nav-label">Nội dung</li>
@@ -58,6 +59,10 @@
         </div>
 
         <div class="admin-content">
+            <div id="orders-user-filter-banner" class="alert alert-info d-none mb-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <span id="orders-user-filter-text"></span>
+                <a href="orders.html" class="btn btn-sm btn-light">Xem tất cả đơn</a>
+            </div>
             <!-- Order Stats -->
             <div class="row g-3 mb-4">
                 <div class="col-lg-3 col-6">
@@ -124,6 +129,7 @@
                         <thead>
                             <tr>
                                 <th>Mã đơn</th>
+                                <th>Tài khoản</th>
                                 <th>Khách hàng</th>
                                 <th>SĐT</th>
                                 <th>Tổng tiền</th>
@@ -135,7 +141,7 @@
                             </tr>
                         </thead>
                         <tbody id="orders-tbody">
-                            <tr><td colspan="9" class="text-center text-muted py-4">Đang tải...</td></tr>
+                            <tr><td colspan="10" class="text-center text-muted py-4">Đang tải...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -155,7 +161,7 @@
                     <p class="text-muted">Đang tải...</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" onclick="printAdminInvoice()"><i class="fas fa-print me-1"></i> In hóa đơn</button>
+                    <button type="button" class="btn btn-primary" id="btn-print-invoice" onclick="printAdminInvoice()"><i class="fas fa-print me-1"></i> In hóa đơn</button>
                     <button type="button" class="btn-admin-outline" data-bs-dismiss="modal">Đóng</button>
                 </div>
             </div>

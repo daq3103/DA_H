@@ -60,6 +60,144 @@ function showToast(message, type = 'success', duration = 3500) {
 }
 
 // ============== SEARCH FUNCTIONALITY ==============
+function normalizeSearchQuery(keyword) {
+    return (keyword || '').trim().toLowerCase();
+}
+
+function matchCategoryByKeyword(category, q) {
+    if (!q || !category) return false;
+    const name = (category.name || '').toLowerCase();
+    const slug = (category.slug || '').toLowerCase();
+    const desc = (category.description || '').toLowerCase();
+    const qAsSlug = q.replace(/\s+/g, '-');
+    return name.includes(q) || slug.includes(q) || slug.includes(qAsSlug) || desc.includes(q);
+}
+
+function getCategorySlugsMatchingKeyword(keyword) {
+    const q = normalizeSearchQuery(keyword);
+    if (!q) return [];
+    return categoriesData
+        .filter(c => matchCategoryByKeyword(c, q))
+        .map(c => (c.slug || '').toLowerCase());
+}
+
+function matchBrandByKeyword(brand, q) {
+    if (!q || !brand) return false;
+    const name = (brand.name || '').toLowerCase();
+    const slug = (brand.slug || '').toLowerCase();
+    const desc = (brand.description || '').toLowerCase();
+    const qAsSlug = q.replace(/\s+/g, '-');
+    return name.includes(q) || slug.includes(q) || slug.includes(qAsSlug) || desc.includes(q);
+}
+
+function getBrandSlugsMatchingKeyword(keyword) {
+    const q = normalizeSearchQuery(keyword);
+    if (!q) return [];
+    return brandsData
+        .filter(b => matchBrandByKeyword(b, q))
+        .map(b => (b.slug || '').toLowerCase());
+}
+
+function productMatchesBrandFilter(product, filterVal) {
+    const f = (filterVal || '').toLowerCase();
+    if (!f) return true;
+    return (product.brand_slug || '').toLowerCase() === f ||
+        (product.brand || '').toLowerCase() === f;
+}
+
+function productMatchesKeyword(product, q, matchedCategorySlugs) {
+    if (!q) return true;
+    if ((product.name || '').toLowerCase().includes(q)) return true;
+    if ((product.brand || '').toLowerCase().includes(q)) return true;
+    if ((product.category || '').toLowerCase().includes(q)) return true;
+    if ((product.category_slug || '').toLowerCase().includes(q)) return true;
+    if ((product.slug || '').toLowerCase().includes(q)) return true;
+    const pSlug = (product.category_slug || '').toLowerCase();
+    if (matchedCategorySlugs.length && matchedCategorySlugs.includes(pSlug)) return true;
+    const matchedBrandSlugs = getBrandSlugsMatchingKeyword(keyword);
+    const bSlug = (product.brand_slug || '').toLowerCase();
+    if (matchedBrandSlugs.length && matchedBrandSlugs.includes(bSlug)) return true;
+    return false;
+}
+
+function findCategoriesByKeyword(keyword, limit = 4) {
+    const q = normalizeSearchQuery(keyword);
+    if (!q) return [];
+    return categoriesData.filter(c => matchCategoryByKeyword(c, q)).slice(0, limit);
+}
+
+function findBrandsByKeyword(keyword, limit = 4) {
+    const q = normalizeSearchQuery(keyword);
+    if (!q) return [];
+    return brandsData.filter(b => matchBrandByKeyword(b, q)).slice(0, limit);
+}
+
+function findProductsByKeyword(keyword, limit = 5) {
+    const q = normalizeSearchQuery(keyword);
+    if (!q) return [];
+    const matchedSlugs = getCategorySlugsMatchingKeyword(keyword);
+    return productsData.filter(p => productMatchesKeyword(p, q, matchedSlugs)).slice(0, limit);
+}
+
+function renderCategorySuggestionItem(category) {
+    return `
+        <a href="products.html?category=${encodeURIComponent(category.slug)}" class="search-suggestion-item search-suggestion-category">
+            <span class="search-suggestion-icon"><i class="fas fa-tags"></i></span>
+            <div class="suggestion-info">
+                <div class="suggestion-name">Danh mục: ${escapeHTML(category.name)}</div>
+                <div class="suggestion-meta">Xem tất cả xe trong danh mục</div>
+            </div>
+        </a>`;
+}
+
+function renderBrandSuggestionItem(brand) {
+    return `
+        <a href="products.html?brand=${encodeURIComponent(brand.slug)}" class="search-suggestion-item search-suggestion-category">
+            <span class="search-suggestion-icon"><i class="fas fa-industry"></i></span>
+            <div class="suggestion-info">
+                <div class="suggestion-name">Hãng: ${escapeHTML(brand.name)}</div>
+                <div class="suggestion-meta">Xem tất cả xe của hãng</div>
+            </div>
+        </a>`;
+}
+
+function renderSearchSuggestionsHtml(keyword) {
+    const trimmed = keyword.trim();
+    const categories = findCategoriesByKeyword(trimmed);
+    const brands = findBrandsByKeyword(trimmed);
+    const products = findProductsByKeyword(trimmed);
+
+    if (categories.length === 0 && brands.length === 0 && products.length === 0) {
+        return `<div class="search-no-result"><i class="fas fa-search me-2"></i>Không tìm thấy "${escapeHTML(trimmed)}"</div>`;
+    }
+
+    let html = '';
+    if (brands.length) {
+        html += `<div class="search-suggestions-label">Hãng xe</div>${brands.map(renderBrandSuggestionItem).join('')}`;
+    }
+    if (categories.length) {
+        html += `<div class="search-suggestions-label">Danh mục</div>${categories.map(renderCategorySuggestionItem).join('')}`;
+    }
+    if (products.length) {
+        if (categories.length || brands.length) html += `<div class="search-suggestions-label">Sản phẩm</div>`;
+        html += products.map(p => {
+            const price = p.sale_price || p.price;
+            return `
+                <a href="product-detail.html?id=${p.id}" class="search-suggestion-item">
+                    <img src="${fixImageUrl(p.image)}" alt="${escapeHTML(p.name)}">
+                    <div class="suggestion-info">
+                        <div class="suggestion-name">${escapeHTML(p.name)}</div>
+                        <div class="suggestion-price">${formatCurrency(price)}</div>
+                    </div>
+                </a>`;
+        }).join('');
+    }
+    html += `<a href="products.html?search=${encodeURIComponent(trimmed)}" class="search-suggestion-item search-suggestion-view-all">
+        Xem tất cả kết quả <i class="fas fa-arrow-right ms-2"></i>
+    </a>`;
+    return html;
+}
+
 function initSearch() {
     const searchForms = document.querySelectorAll('form:has(input[type="search"])');
     searchForms.forEach(form => {
@@ -87,37 +225,15 @@ function initSearch() {
         let debounceTimer;
         input.addEventListener('input', () => {
             clearTimeout(debounceTimer);
-            const query = input.value.trim().toLowerCase();
+            const query = input.value.trim();
             
-            if (query.length < 2 || productsData.length === 0) {
+            if (query.length < 2) {
                 suggestionsDiv.classList.remove('show');
                 return;
             }
 
             debounceTimer = setTimeout(() => {
-                const results = productsData.filter(p =>
-                    p.name.toLowerCase().includes(query) ||
-                    p.brand.toLowerCase().includes(query) ||
-                    p.category.toLowerCase().includes(query)
-                ).slice(0, 5);
-
-                if (results.length === 0) {
-                    suggestionsDiv.innerHTML = `<div class="search-no-result"><i class="fas fa-search me-2"></i>Không tìm thấy "${input.value.trim()}"</div>`;
-                } else {
-                    suggestionsDiv.innerHTML = results.map(p => {
-                        const price = p.sale_price || p.price;
-                        return `
-                            <a href="product-detail.html?id=${p.id}" class="search-suggestion-item">
-                                <img src="${fixImageUrl(p.image)}" alt="${p.name}">
-                                <div class="suggestion-info">
-                                    <div class="suggestion-name">${p.name}</div>
-                                    <div class="suggestion-price">${formatCurrency(price)}</div>
-                                </div>
-                            </a>`;
-                    }).join('') + `<a href="products.html?search=${encodeURIComponent(input.value.trim())}" class="search-suggestion-item" style="justify-content:center;color:var(--moto-primary);font-weight:600;">
-                        Xem tất cả kết quả <i class="fas fa-arrow-right ms-2"></i>
-                    </a>`;
-                }
+                suggestionsDiv.innerHTML = renderSearchSuggestionsHtml(query);
                 suggestionsDiv.classList.add('show');
             }, 250);
         });
@@ -193,6 +309,7 @@ function paginateArray(arr) {
 let cart = [];
 let productsData = [];
 let categoriesData = [];
+let brandsData = [];
 
 function getCartStorageKey() {
     const user = getLoggedInUser();
@@ -309,12 +426,9 @@ function updateProductStockHint(stock) {
 
 function filterProductsByKeyword(products, keyword) {
     if (!keyword) return [...products];
-    const q = keyword.toLowerCase();
-    return products.filter(p =>
-        p.name.toLowerCase().includes(q) ||
-        p.brand.toLowerCase().includes(q) ||
-        p.category.toLowerCase().includes(q)
-    );
+    const q = normalizeSearchQuery(keyword);
+    const matchedSlugs = getCategorySlugsMatchingKeyword(keyword);
+    return products.filter(p => productMatchesKeyword(p, q, matchedSlugs));
 }
 
 function renderProductsGridState(productsGrid, products) {
@@ -347,6 +461,18 @@ async function fetchCategories() {
     }
 }
 
+async function fetchBrands() {
+    try {
+        const res = await fetch('api/get_brands.php');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.error) return;
+        brandsData = Array.isArray(data) ? data : [];
+    } catch (e) {
+        console.warn('Không tải được hãng xe:', e);
+    }
+}
+
 function renderCategoryFilters() {
     const container = document.getElementById('category-filters');
     if (!container) return;
@@ -370,6 +496,32 @@ function renderNavCategories() {
     }
     placeholder.outerHTML = categoriesData.map(c =>
         `<li><a class="dropdown-item py-2" href="products.html?category=${encodeURIComponent(c.slug)}">${escapeHTML(c.name)}</a></li>`
+    ).join('');
+}
+
+function renderBrandFilters() {
+    const container = document.getElementById('brand-filters');
+    if (!container) return;
+    if (!brandsData.length) {
+        container.innerHTML = '<p class="text-muted small mb-0">Chưa có hãng xe</p>';
+        return;
+    }
+    container.innerHTML = brandsData.map(b => `
+        <div class="form-check mb-2">
+            <input class="form-check-input filter-brand" type="checkbox" value="${escapeHTML(b.name)}" data-slug="${escapeHTML(b.slug)}" id="brand-filter-${b.id}">
+            <label class="form-check-label text-muted" for="brand-filter-${b.id}">${escapeHTML(b.name)}</label>
+        </div>
+    `).join('');
+}
+
+function renderNavBrands() {
+    const placeholder = document.getElementById('nav-brand-items');
+    if (!placeholder || !brandsData.length) {
+        if (placeholder) placeholder.remove();
+        return;
+    }
+    placeholder.outerHTML = brandsData.map(b =>
+        `<li><a class="dropdown-item py-2" href="products.html?brand=${encodeURIComponent(b.slug)}">${escapeHTML(b.name)}</a></li>`
     ).join('');
 }
 
@@ -411,7 +563,8 @@ window.motoInitStorefront = async function() {
     try {
         const [productsRes] = await Promise.all([
             fetch('api/get_products.php'),
-            fetchCategories()
+            fetchCategories(),
+            fetchBrands()
         ]);
         const payload = await productsRes.json().catch(() => null);
 
@@ -442,7 +595,9 @@ window.motoInitStorefront = async function() {
         }
 
         renderCategoryFilters();
+        renderBrandFilters();
         renderNavCategories();
+        renderNavBrands();
         initSearch();
 
         if (document.getElementById('new-arrivals-container')) renderHomeProducts();
@@ -503,9 +658,11 @@ function renderProductsPage() {
     }
 
     if (filterBrand) {
-        filtered = filtered.filter(p => p.brand.toLowerCase() === filterBrand.toLowerCase());
+        const f = filterBrand.toLowerCase();
+        filtered = filtered.filter(p => productMatchesBrandFilter(p, f));
         document.querySelectorAll('.filter-brand').forEach(cb => {
-            if(cb.value.toLowerCase() === filterBrand.toLowerCase()) cb.checked = true;
+            const slug = (cb.dataset.slug || '').toLowerCase();
+            if (slug === f || cb.value.toLowerCase() === f) cb.checked = true;
         });
     }
     
@@ -654,21 +811,15 @@ function renderProductDetail() {
                 ${oldPriceHTML}
             </div>
             
-            ${product.description && product.description.trim() ? `
             <div class="mb-4 pb-3 border-bottom">
-                <h6 class="fw-bold mb-2">Mô tả nhanh</h6>
-                <p class="text-muted mb-0 product-description-short">${formatProductDescription(product.description.length > 220 ? product.description.slice(0, 220) + '…' : product.description)}</p>
-            </div>
-            ` : `
-            <div class="mb-4">
-                <h6 class="fw-bold mb-3">Chính sách đặc quyền mua xe:</h6>
-                <ul class="list-unstyled text-muted lh-lg">
+                <h6 class="fw-bold mb-3">Chính sách đặc quyền mua xe</h6>
+                <ul class="list-unstyled text-muted lh-lg mb-0">
                     <li><i class="fas fa-check text-success me-2"></i>Bảo hành chính hãng 30.000km hoặc 3 năm.</li>
                     <li><i class="fas fa-check text-success me-2"></i>Tặng kèm: Mũ bảo hiểm, Áo mưa thiết kế cao cấp.</li>
                     <li><i class="fas fa-check text-success me-2"></i>Hỗ trợ trả góp lãi suất 0% qua thẻ tín dụng.</li>
                 </ul>
+                ${product.description && product.description.trim() ? '<p class="small text-muted mt-3 mb-0"><i class="fas fa-arrow-down me-1"></i>Xem mô tả chi tiết bên dưới.</p>' : ''}
             </div>
-            `}
             
             <div class="d-flex flex-wrap align-items-center gap-3 mb-4">
                 <div class="input-group" style="width: 130px;">

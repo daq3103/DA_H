@@ -661,6 +661,41 @@ body {
     font-weight: 600;
 }
 
+.search-suggestions-label {
+    padding: 8px 16px 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #9ca3af;
+    background: #f8f9fa;
+    border-bottom: 1px solid #f1f3f5;
+}
+
+.search-suggestion-category .search-suggestion-icon {
+    width: 45px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff7ed;
+    color: var(--moto-primary);
+    border-radius: 6px;
+    flex-shrink: 0;
+    font-size: 1rem;
+}
+
+.search-suggestion-item .suggestion-meta {
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+.search-suggestion-view-all {
+    justify-content: center;
+    color: var(--moto-primary) !important;
+    font-weight: 600;
+}
+
 .search-no-result {
     padding: 20px 16px;
     text-align: center;

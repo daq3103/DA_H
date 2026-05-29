@@ -35,12 +35,27 @@
             <div class="collapse navbar-collapse" id="navbarContent">
                 <ul class="navbar-nav mx-auto mb-2 mb-lg-0 fw-medium">
                     <li class="nav-item"><a class="nav-link px-3" href="index.html">Trang chủ</a></li>
-                    <li class="nav-item"><a class="nav-link active px-3" href="products.html">Sản phẩm</a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle active px-3" href="products.html" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Sản phẩm</a>
+                        <ul class="dropdown-menu border-0 shadow-sm" aria-labelledby="navbarDropdown">
+                            <li id="nav-brand-items"><span class="dropdown-item py-2 text-muted small">Đang tải hãng...</span></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li id="nav-category-items"><span class="dropdown-item py-2 text-muted small">Đang tải danh mục...</span></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item py-2 fw-bold text-primary-moto" href="products.html">Xem tất cả xe</a></li>
+                        </ul>
+                    </li>
                     <li class="nav-item"><a class="nav-link px-3" href="news.html">Tin tức</a></li>
                     <li class="nav-item"><a class="nav-link px-3" href="contact.html">Liên hệ</a></li>
                 </ul>
 
                 <div class="d-flex align-items-center gap-3 mt-3 mt-lg-0">
+                    <form class="position-relative d-none d-lg-block">
+                        <input class="form-control rounded-pill pe-5 bg-light border-0" type="search" placeholder="Tìm xe, hãng, danh mục..." aria-label="Search">
+                        <button class="btn position-absolute top-50 end-0 translate-middle-y text-muted border-0" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </form>
                     <a href="cart.html" class="position-relative text-dark fs-5 head-icon-btn d-flex align-items-center justify-content-center">
                         <i class="fas fa-shopping-cart"></i>
                         <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem;">
@@ -82,17 +97,8 @@
                         <!-- Lọc theo Hãng -->
                         <div class="mb-4">
                             <h6 class="fw-bold mb-3">Hãng Sản Xuất</h6>
-                            <div class="form-check mb-2">
-                                <input class="form-check-input filter-brand" type="checkbox" value="Honda" id="brand1">
-                                <label class="form-check-label text-muted" for="brand1">Honda</label>
-                            </div>
-                            <div class="form-check mb-2">
-                                <input class="form-check-input filter-brand" type="checkbox" value="Yamaha" id="brand2">
-                                <label class="form-check-label text-muted" for="brand2">Yamaha</label>
-                            </div>
-                            <div class="form-check mb-2">
-                                <input class="form-check-input filter-brand" type="checkbox" value="Ducati" id="brand3">
-                                <label class="form-check-label text-muted" for="brand3">Ducati</label>
+                            <div id="brand-filters">
+                                <p class="text-muted small mb-0">Đang tải hãng xe...</p>
                             </div>
                         </div>
 

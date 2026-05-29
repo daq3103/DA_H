@@ -27,6 +27,7 @@
             <li class="nav-label">Quản lý</li>
             <li><a href="products.html"><i class="fas fa-motorcycle"></i> Sản phẩm</a></li>
             <li><a href="categories.html"><i class="fas fa-tags"></i> Danh mục</a></li>
+            <li><a href="brands.html"><i class="fas fa-industry"></i> Hãng xe</a></li>
             <li><a href="orders.html"><i class="fas fa-shopping-bag"></i> Đơn hàng</a></li>
             <li><a href="customers.html" class="active"><i class="fas fa-users"></i> Khách hàng</a></li>
             <li class="nav-label">Nội dung</li>
@@ -77,12 +78,31 @@
                                 <th>Địa chỉ</th>
                                 <th>Số đơn hàng</th>
                                 <th>Ngày đăng ký</th>
+                                <th>Thao tác</th>
                             </tr>
                         </thead>
                         <tbody id="customers-tbody">
-                            <tr><td colspan="7" class="text-center text-muted py-4">Đang tải...</td></tr>
+                            <tr><td colspan="8" class="text-center text-muted py-4">Đang tải...</td></tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="customerOrdersModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Đơn hàng theo tài khoản — <span id="customer-orders-title"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="customer-orders-body">
+                    <p class="text-muted">Đang tải...</p>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" id="customer-orders-link-all" class="btn btn-admin-primary btn-sm"><i class="fas fa-shopping-bag me-1"></i> Mở trang đơn hàng (lọc)</a>
+                    <button type="button" class="btn-admin-outline" data-bs-dismiss="modal">Đóng</button>
                 </div>
             </div>
         </div>

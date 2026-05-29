@@ -12,41 +12,36 @@ header("Access-Control-Allow-Headers: Content-Type");
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { exit(0); }
 
 require 'db.php';
+require 'order_helpers.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 
 try {
     switch ($method) {
         case 'GET':
-            $orders = $pdo->query("
-                SELECT o.*, o.shipping_name as customer_name, o.shipping_phone as phone, o.shipping_address as address
+            $userIdFilter = isset($_GET['user_id']) ? (int)$_GET['user_id'] : 0;
+            $sql = "
+                SELECT o.*,
+                       o.shipping_name AS customer_name,
+                       o.shipping_phone AS phone,
+                       o.shipping_address AS address,
+                       u.email AS user_email,
+                       u.full_name AS account_name
                 FROM orders o
-                ORDER BY o.created_at DESC
-            ")->fetchAll();
+                LEFT JOIN users u ON o.user_id = u.id
+            ";
+            if ($userIdFilter > 0) {
+                $sql .= " WHERE o.user_id = ? ORDER BY o.created_at DESC";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([$userIdFilter]);
+                $orders = $stmt->fetchAll();
+            } else {
+                $sql .= " ORDER BY o.created_at DESC";
+                $orders = $pdo->query($sql)->fetchAll();
+            }
 
-            // Attach items for each order
             foreach ($orders as &$order) {
-                $stmt = $pdo->prepare("
-                    SELECT oi.product_id, oi.quantity, oi.unit_price,
-                           COALESCE(p.id, oi.product_id) AS product_id,
-                           p.name AS product_name
-                    FROM order_items oi
-                    LEFT JOIN products p ON oi.product_id = p.id
-                    WHERE oi.order_id = ?
-                ");
-                $stmt->execute([$order['id']]);
-                $items = [];
-                foreach ($stmt->fetchAll() as $row) {
-                    $items[] = [
-                        'product_id' => (int)$row['product_id'],
-                        'product_name' => $row['product_name'] ?: ('Sản phẩm #' . $row['product_id']),
-                        'quantity' => (int)$row['quantity'],
-                        'unit_price' => (float)$row['unit_price']
-                    ];
-                }
-                $order['items'] = $items;
-                $order['total_amount'] = (float)$order['total_amount'];
-                $order['order_date'] = $order['created_at'];
+                attachOrderItems($pdo, $order);
             }
 
             echo json_encode($orders);

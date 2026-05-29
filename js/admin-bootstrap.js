@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (page === 'reports') await loadReports('today');
     if (page === 'products') await loadProducts();
     if (page === 'categories') await loadCategories();
+    if (page === 'brands') await loadBrands();
     if (page === 'orders') await loadOrders();
     if (page === 'customers') await loadCustomers();
     if (page === 'news') await loadNews();

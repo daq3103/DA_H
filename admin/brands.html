@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Lý Liên Hệ - motoShop Admin</title>
+    <title>Quản Lý Hãng Xe - motoShop Admin</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -27,12 +27,12 @@
             <li class="nav-label">Quản lý</li>
             <li><a href="products.html"><i class="fas fa-motorcycle"></i> Sản phẩm</a></li>
             <li><a href="categories.html"><i class="fas fa-tags"></i> Danh mục</a></li>
-            <li><a href="brands.html"><i class="fas fa-industry"></i> Hãng xe</a></li>
+            <li><a href="brands.html" class="active"><i class="fas fa-industry"></i> Hãng xe</a></li>
             <li><a href="orders.html"><i class="fas fa-shopping-bag"></i> Đơn hàng</a></li>
             <li><a href="customers.html"><i class="fas fa-users"></i> Khách hàng</a></li>
             <li class="nav-label">Nội dung</li>
             <li><a href="news.html"><i class="fas fa-newspaper"></i> Tin tức</a></li>
-            <li><a href="contacts.html" class="active"><i class="fas fa-envelope"></i> Liên hệ</a></li>
+            <li><a href="contacts.html"><i class="fas fa-envelope"></i> Liên hệ</a></li>
             <li class="nav-label">Hệ thống</li>
             <li><a href="../index.html" target="_blank"><i class="fas fa-external-link-alt"></i> Xem Website</a></li>
             <li><a href="#" onclick="adminLogout()" class="text-danger"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a></li>
@@ -44,8 +44,8 @@
             <div class="topbar-left">
                 <button class="btn-sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
                 <div>
-                    <h5>Quản Lý Liên Hệ</h5>
-                    <span class="breadcrumb-text">Dashboard / Liên hệ</span>
+                    <h5>Quản Lý Hãng Xe</h5>
+                    <span class="breadcrumb-text">Dashboard / Hãng xe</span>
                 </div>
             </div>
             <div class="topbar-right">
@@ -61,28 +61,25 @@
         <div class="admin-content">
             <div class="admin-card">
                 <div class="admin-card-header">
-                    <h6><i class="fas fa-envelope me-2 text-warning"></i>Tin Nhắn Liên Hệ</h6>
-                    <div class="admin-search">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="searchContact" placeholder="Tìm tên, email..." oninput="filterContacts()">
-                    </div>
+                    <h6><i class="fas fa-industry me-2 text-primary"></i>Danh Sách Hãng Xe</h6>
+                    <button class="btn btn-admin-primary btn-sm" onclick="openAddBrand()">
+                        <i class="fas fa-plus me-1"></i> Thêm hãng
+                    </button>
                 </div>
                 <div class="admin-card-body" style="overflow-x: auto;">
                     <table class="admin-table">
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <th>Họ tên</th>
-                                <th>SĐT</th>
-                                <th>Email</th>
-                                <th>Nội dung</th>
-                                <th>Trạng thái</th>
-                                <th>Ngày gửi</th>
-                                <th>Hành động</th>
+                                <th>Tên hãng</th>
+                                <th>Slug (URL)</th>
+                                <th>Số sản phẩm</th>
+                                <th>Mô tả</th>
+                                <th>Thao tác</th>
                             </tr>
                         </thead>
-                        <tbody id="contacts-tbody">
-                            <tr><td colspan="8" class="text-center text-muted py-4">Đang tải...</td></tr>
+                        <tbody id="brands-tbody">
+                            <tr><td colspan="6" class="text-center text-muted py-4">Đang tải...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -90,18 +87,32 @@
         </div>
     </div>
 
-    <!-- Contact Detail Modal -->
-    <div class="modal fade" id="contactDetailModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
+    <div class="modal fade" id="brandModal" tabindex="-1">
+        <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Chi Tiết Liên Hệ</h5>
+                    <h5 class="modal-title" id="brandModalTitle">Thêm Hãng Xe</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body" id="contact-detail-body">
+                <div class="modal-body">
+                    <input type="hidden" id="brand_id">
+                    <div class="mb-3">
+                        <label class="form-label">Tên hãng <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="brand_name" placeholder="VD: Suzuki" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Slug (URL)</label>
+                        <input type="text" class="form-control" id="brand_slug" placeholder="suzuki (tự tạo nếu để trống)">
+                        <div class="form-text">Dùng trong link: products.html?brand=suzuki</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mô tả</label>
+                        <textarea class="form-control" id="brand_desc" rows="2"></textarea>
+                    </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn-admin-outline" data-bs-dismiss="modal">Đóng</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-admin-primary" onclick="saveBrandForm()">Lưu</button>
                 </div>
             </div>
         </div>

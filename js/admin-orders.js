@@ -2,6 +2,7 @@
 const { escapeHTML, formatCurrency, formatDate } = window.MotoShared || {};
 let adminOrders = [];
 let paymentFilter = 'all';
+let ordersUserIdFilter = null;
 const ORDER_API_URL = API_BASE + 'admin_orders.php';
 const ORDER_STATUS_KEYS = ['pending', 'contacted', 'completed', 'cancelled'];
 const ORDER_STAT_FIELD_IDS = {
@@ -58,14 +59,45 @@ function renderPaymentStatusCell(order) {
     `;
 }
 
+function initOrdersUserFilter() {
+    const params = new URLSearchParams(window.location.search);
+    const uid = params.get('user_id');
+    ordersUserIdFilter = uid ? parseInt(uid, 10) : null;
+    const banner = document.getElementById('orders-user-filter-banner');
+    const textEl = document.getElementById('orders-user-filter-text');
+    if (!banner || !textEl || !ordersUserIdFilter) return;
+
+    const order = adminOrders.find(o => o.user_id === ordersUserIdFilter);
+    const label = order?.account_name || order?.user_email || `ID #${ordersUserIdFilter}`;
+    textEl.innerHTML = `<i class="fas fa-user me-2"></i>Đang lọc đơn của tài khoản: <strong>${escapeHTML(label)}</strong>`;
+    banner.classList.remove('d-none');
+}
+
+function renderOrderAccountCell(order) {
+    if (!order.user_id) {
+        return '<span class="text-muted small">Khách không đăng nhập</span>';
+    }
+    const label = escapeHTML(order.user_email || order.account_name || `User #${order.user_id}`);
+    return `<a href="orders.html?user_id=${order.user_id}" class="text-decoration-none small" title="Lọc đơn của tài khoản">${label}</a>`;
+}
+
 async function loadOrders() {
+    const params = new URLSearchParams(window.location.search);
+    const uid = params.get('user_id');
+    const url = uid ? `${ORDER_API_URL}?user_id=${encodeURIComponent(uid)}` : ORDER_API_URL;
+
     try {
-        const res = await fetch(ORDER_API_URL);
+        const res = await fetch(url);
         adminOrders = await res.json();
         if (adminOrders.error) throw new Error();
     } catch (err) {
         adminOrders = [...DEMO_ORDERS];
+        if (uid) {
+            const userId = parseInt(uid, 10);
+            adminOrders = adminOrders.filter(o => o.user_id === userId);
+        }
     }
+    initOrdersUserFilter();
     renderOrdersTable(getFilteredOrders());
     updateOrderStats();
 }
@@ -100,10 +132,13 @@ function getFilteredOrders() {
         const matchSearch = !q ||
             o.customer_name.toLowerCase().includes(q) ||
             String(o.id).includes(q) ||
-            (o.order_code && o.order_code.toLowerCase().includes(q));
+            (o.order_code && o.order_code.toLowerCase().includes(q)) ||
+            (o.user_email && o.user_email.toLowerCase().includes(q)) ||
+            (o.account_name && o.account_name.toLowerCase().includes(q));
         const method = o.payment_method === 'qr_transfer' ? 'qr_transfer' : 'cod';
         const matchPay = paymentFilter === 'all' || method === paymentFilter;
-        return matchSearch && matchPay;
+        const matchUser = !ordersUserIdFilter || o.user_id === ordersUserIdFilter;
+        return matchSearch && matchPay && matchUser;
     });
 }
 
@@ -119,12 +154,13 @@ function renderOrdersTable(orders) {
     const tbody = document.getElementById('orders-tbody');
     if (!tbody) return;
     if (orders.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-5"><div class="empty-state"><i class="fas fa-shopping-bag d-block"></i><h5>Chưa có đơn hàng nào</h5></div></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="text-center py-5"><div class="empty-state"><i class="fas fa-shopping-bag d-block"></i><h5>Chưa có đơn hàng nào</h5></div></td></tr>';
         return;
     }
     tbody.innerHTML = orders.map(o => `
         <tr>
             <td><strong>#${o.order_code || o.id}</strong></td>
+            <td>${renderOrderAccountCell(o)}</td>
             <td>${escapeHTML(o.customer_name)}</td>
             <td>${o.phone || '—'}</td>
             <td class="fw-bold">${formatCurrency(o.total_amount)}</td>
@@ -183,6 +219,12 @@ async function confirmCodPayment(id) {
 
 let currentViewOrderId = null;
 
+function canPrintOrderInvoice(order) {
+    if (!order) return false;
+    if (order.status === 'cancelled') return false;
+    return order.payment_status === 'paid' || order.status === 'completed';
+}
+
 function viewOrderDetail(id) {
     const o = getOrderById(id);
     if (!o) return;
@@ -206,6 +248,7 @@ function viewOrderDetail(id) {
             <div class="col-md-6">
                 <h6 class="fw-bold mb-3"><i class="fas fa-info-circle me-2"></i>Thông tin đơn hàng</h6>
                 <p class="mb-1"><strong>Mã đơn:</strong> #${o.order_code || o.id}</p>
+                <p class="mb-1"><strong>Tài khoản:</strong> ${o.user_id ? escapeHTML(o.user_email || o.account_name || ('User #' + o.user_id)) : 'Khách không đăng nhập'}</p>
                 <p class="mb-1"><strong>Ngày đặt:</strong> ${formatDate(o.order_date)}</p>
                 <p class="mb-1"><strong>Tổng tiền:</strong> <span class="text-danger fw-bold">${formatCurrency(o.total_amount)}</span></p>
                 <p class="mb-1"><strong>Phương thức:</strong> <span class="status-badge ${getPaymentMethodBadgeClass(o.payment_method)}">${getPaymentMethodLabel(o.payment_method)}</span></p>
@@ -236,6 +279,13 @@ function viewOrderDetail(id) {
             </div>
         </div>
     `;
+    const printBtn = document.getElementById('btn-print-invoice');
+    if (printBtn) {
+        const allowPrint = canPrintOrderInvoice(o);
+        printBtn.disabled = !allowPrint;
+        printBtn.classList.toggle('d-none', !allowPrint);
+        printBtn.title = allowPrint ? '' : 'Không in hóa đơn cho đơn đã hủy hoặc chưa thanh toán';
+    }
     new bootstrap.Modal(document.getElementById('orderDetailModal')).show();
 }
 
@@ -243,6 +293,12 @@ function printAdminInvoice() {
     if (!currentViewOrderId) return;
     const o = getOrderById(currentViewOrderId);
     if (!o) return;
+    if (!canPrintOrderInvoice(o)) {
+        alert(o.status === 'cancelled'
+            ? 'Đơn đã hủy, không thể in hóa đơn.'
+            : 'Chỉ in hóa đơn khi đơn đã thanh toán hoặc hoàn thành.');
+        return;
+    }
 
     let printWindow = window.open('', '_blank');
     let itemsHtml = (o.items || []).map(i => `

@@ -60,11 +60,11 @@ const DEMO_PRODUCTS = [
 ];
 
 const DEMO_ORDERS = [
-    { id:1, order_code:"HD1503-A1B2", customer_name:"Nguyễn Văn A", phone:"0912345678", address:"123 Cầu Diễn, HN", total_amount:48500000, status:"pending", payment_method:"cod", payment_status:"unpaid", order_date:"2026-03-15T10:30:00", notes:"Giao buổi sáng", items:[{product_id:1,product_name:"Honda Winner X 2024",quantity:1,unit_price:48500000}] },
-    { id:2, order_code:"HD1403-B2C3", customer_name:"Trần Thị B", phone:"0987654321", address:"456 Láng Hạ, HN", total_amount:101000000, status:"contacted", payment_method:"qr_transfer", payment_status:"paid", order_date:"2026-03-14T14:20:00", notes:"", items:[{product_id:3,product_name:"Honda SH 160i 2024",quantity:1,unit_price:101000000}] },
-    { id:3, order_code:"HD1203-C4D5", customer_name:"Lê Văn C", phone:"0901234567", address:"789 Kim Mã, HN", total_amount:51000000, status:"completed", payment_method:"cod", payment_status:"paid", order_date:"2026-03-12T09:00:00", notes:"Đã thu COD", items:[{product_id:2,product_name:"Yamaha Exciter 155 VVA",quantity:1,unit_price:51000000}] },
-    { id:4, order_code:"HD1603-D6E7", customer_name:"Phạm Thị D", phone:"0976543210", address:"321 Tây Hồ, HN", total_amount:35000000, status:"pending", payment_method:"qr_transfer", payment_status:"paid", order_date:"2026-03-16T16:45:00", notes:"Đã chuyển khoản QR", items:[{product_id:4,product_name:"Honda Vision 2024",quantity:1,unit_price:35000000}] },
-    { id:5, order_code:"HD1003-E8F9", customer_name:"Hoàng Văn E", phone:"0945678901", address:"654 Thanh Xuân, HN", total_amount:750000000, status:"cancelled", payment_method:"cod", payment_status:"unpaid", order_date:"2026-03-10T11:15:00", notes:"Khách hủy", items:[{product_id:6,product_name:"Ducati Panigale V4",quantity:1,unit_price:750000000}] }
+    { id:1, user_id:1, user_email:"nguyenvana@gmail.com", account_name:"Nguyễn Văn A", order_code:"HD1503-A1B2", customer_name:"Nguyễn Văn A", phone:"0912345678", address:"123 Cầu Diễn, HN", total_amount:48500000, status:"pending", payment_method:"cod", payment_status:"unpaid", order_date:"2026-03-15T10:30:00", notes:"Giao buổi sáng", items:[{product_id:1,product_name:"Honda Winner X 2024",quantity:1,unit_price:48500000}] },
+    { id:2, user_id:2, user_email:"tranthib@gmail.com", account_name:"Trần Thị B", order_code:"HD1403-B2C3", customer_name:"Trần Thị B", phone:"0987654321", address:"456 Láng Hạ, HN", total_amount:101000000, status:"contacted", payment_method:"qr_transfer", payment_status:"paid", order_date:"2026-03-14T14:20:00", notes:"", items:[{product_id:3,product_name:"Honda SH 160i 2024",quantity:1,unit_price:101000000}] },
+    { id:3, user_id:3, user_email:"levanc@yahoo.com", account_name:"Lê Văn C", order_code:"HD1203-C4D5", customer_name:"Lê Văn C", phone:"0901234567", address:"789 Kim Mã, HN", total_amount:51000000, status:"completed", payment_method:"cod", payment_status:"paid", order_date:"2026-03-12T09:00:00", notes:"Đã thu COD", items:[{product_id:2,product_name:"Yamaha Exciter 155 VVA",quantity:1,unit_price:51000000}] },
+    { id:4, user_id:4, user_email:"phamthid@gmail.com", account_name:"Phạm Thị D", order_code:"HD1603-D6E7", customer_name:"Phạm Thị D", phone:"0976543210", address:"321 Tây Hồ, HN", total_amount:35000000, status:"pending", payment_method:"qr_transfer", payment_status:"paid", order_date:"2026-03-16T16:45:00", notes:"Đã chuyển khoản QR", items:[{product_id:4,product_name:"Honda Vision 2024",quantity:1,unit_price:35000000}] },
+    { id:5, user_id:5, user_email:"hoangvane@gmail.com", account_name:"Hoàng Văn E", order_code:"HD1003-E8F9", customer_name:"Hoàng Văn E", phone:"0945678901", address:"654 Thanh Xuân, HN", total_amount:750000000, status:"cancelled", payment_method:"cod", payment_status:"unpaid", order_date:"2026-03-10T11:15:00", notes:"Khách hủy", items:[{product_id:6,product_name:"Ducati Panigale V4",quantity:1,unit_price:750000000}] }
 ];
 
 const DEMO_CUSTOMERS = [
@@ -133,6 +133,7 @@ function getCurrentPage() {
     const path = window.location.pathname;
     if (path.includes('products.html')) return 'products';
     if (path.includes('categories.html')) return 'categories';
+    if (path.includes('brands.html')) return 'brands';
     if (path.includes('orders.html')) return 'orders';
     if (path.includes('customers.html')) return 'customers';
     if (path.includes('news.html')) return 'news';
@@ -262,9 +263,9 @@ async function fetchAdminBrands() {
         adminBrands = Array.isArray(data) ? data : [];
     } catch (err) {
         adminBrands = [
-            { id: 1, name: 'Honda' },
-            { id: 2, name: 'Yamaha' },
-            { id: 3, name: 'Ducati' }
+            { id: 1, name: 'Honda', slug: 'honda' },
+            { id: 2, name: 'Yamaha', slug: 'yamaha' },
+            { id: 3, name: 'Ducati', slug: 'ducati' }
         ];
     }
     populateProductBrandSelect();
@@ -383,6 +384,107 @@ async function deleteCategory(id) {
             return;
         }
         await loadCategories();
+    } catch (err) {
+        alert('Lỗi kết nối');
+    }
+}
+
+// =================== BRANDS ===================
+async function loadBrands() {
+    await fetchAdminBrands();
+    renderBrandsTable(adminBrands);
+}
+
+function renderBrandsTable(brands) {
+    const tbody = el('brands-tbody');
+    if (!tbody) return;
+    if (!brands.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted">Chưa có hãng xe nào</td></tr>';
+        return;
+    }
+    tbody.innerHTML = brands.map(b => `
+        <tr>
+            <td>${b.id}</td>
+            <td><strong>${escapeHTML(b.name)}</strong></td>
+            <td><code>${escapeHTML(b.slug)}</code></td>
+            <td>${b.product_count ?? 0}</td>
+            <td class="text-muted small">${escapeHTML((b.description || '').substring(0, 80))}${(b.description || '').length > 80 ? '…' : ''}</td>
+            <td>
+                <div class="d-flex gap-2">
+                    <button class="btn-action btn-edit" onclick="openEditBrand(${b.id})" title="Sửa"><i class="fas fa-pen"></i></button>
+                    <button class="btn-action btn-delete" onclick="deleteBrand(${b.id})" title="Xóa"><i class="fas fa-trash"></i></button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function openAddBrand() {
+    el('brandModalTitle').textContent = 'Thêm Hãng Xe';
+    el('brand_id').value = '';
+    el('brand_name').value = '';
+    el('brand_slug').value = '';
+    el('brand_desc').value = '';
+    new bootstrap.Modal(el('brandModal')).show();
+}
+
+function openEditBrand(id) {
+    const b = adminBrands.find(x => x.id === id);
+    if (!b) return;
+    el('brandModalTitle').textContent = 'Sửa Hãng Xe';
+    el('brand_id').value = b.id;
+    el('brand_name').value = b.name;
+    el('brand_slug').value = b.slug;
+    el('brand_desc').value = b.description || '';
+    new bootstrap.Modal(el('brandModal')).show();
+}
+
+async function saveBrandForm() {
+    const id = el('brand_id').value;
+    const name = el('brand_name').value.trim();
+    if (!name) {
+        alert('Vui lòng nhập tên hãng');
+        return;
+    }
+    const payload = {
+        name,
+        slug: el('brand_slug').value.trim() || slugify(name),
+        description: el('brand_desc').value.trim()
+    };
+    if (id) payload.id = parseInt(id, 10);
+
+    try {
+        const res = await fetch(ADMIN_API_URLS.brands, {
+            method: id ? 'PUT' : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.error) {
+            alert(data.message || 'Lỗi lưu hãng xe');
+            return;
+        }
+        bootstrap.Modal.getInstance(el('brandModal')).hide();
+        await loadBrands();
+    } catch (err) {
+        alert('Không thể kết nối API hãng xe');
+    }
+}
+
+async function deleteBrand(id) {
+    if (!confirm('Xóa hãng xe này? (Chỉ xóa được khi không còn sản phẩm)')) return;
+    try {
+        const res = await fetch(ADMIN_API_URLS.brands, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id })
+        });
+        const data = await res.json();
+        if (data.error) {
+            alert(data.message || 'Không thể xóa');
+            return;
+        }
+        await loadBrands();
     } catch (err) {
         alert('Lỗi kết nối');
     }
@@ -692,7 +794,7 @@ function renderCustomersTable(customers) {
     const tbody = document.getElementById('customers-tbody');
     if (!tbody) return;
     if (customers.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="empty-state"><i class="fas fa-users d-block"></i><h5>Chưa có khách hàng nào</h5></div></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5"><div class="empty-state"><i class="fas fa-users d-block"></i><h5>Chưa có khách hàng nào</h5></div></td></tr>';
         return;
     }
     tbody.innerHTML = customers.map((c, i) => `
@@ -704,14 +806,137 @@ function renderCustomersTable(customers) {
             <td class="text-truncate" style="max-width:200px;">${escapeHTML(c.address || '—')}</td>
             <td><span class="badge bg-primary rounded-pill">${c.order_count || 0}</span></td>
             <td class="text-muted">${formatDate(c.created_at)}</td>
+            <td>
+                <button class="btn-action btn-view" onclick="viewCustomerOrders(${c.id})" title="Xem đơn theo tài khoản" ${(c.order_count || 0) === 0 ? 'disabled' : ''}>
+                    <i class="fas fa-shopping-bag"></i>
+                </button>
+                <a class="btn-action btn-edit" href="orders.html?user_id=${c.id}" title="Lọc đơn trên trang đơn hàng"><i class="fas fa-filter"></i></a>
+            </td>
         </tr>
     `).join('');
 }
 
 function filterCustomers() {
     const q = document.getElementById('searchCustomer').value.toLowerCase();
-    const filtered = adminCustomers.filter(c => c.full_name.toLowerCase().includes(q) || c.phone.includes(q));
+    const filtered = adminCustomers.filter(c =>
+        c.full_name.toLowerCase().includes(q) ||
+        c.phone.includes(q) ||
+        (c.email || '').toLowerCase().includes(q)
+    );
     renderCustomersTable(filtered);
+}
+
+function getOrderPaymentMethodLabel(method) {
+    return method === 'qr_transfer' ? 'Chuyển khoản QR' : 'COD';
+}
+
+function renderCustomerOrderItemsRows(items) {
+    if (!items || !items.length) {
+        return '<tr><td colspan="4" class="text-muted small">Không có sản phẩm</td></tr>';
+    }
+    return items.map(i => `
+        <tr>
+            <td>#${i.product_id || '—'}</td>
+            <td>${escapeHTML(i.product_name || '—')}</td>
+            <td class="text-center">${i.quantity}</td>
+            <td class="text-end">${formatCurrency(i.quantity * i.unit_price)}</td>
+        </tr>
+    `).join('');
+}
+
+async function viewCustomerOrders(userId) {
+    const body = el('customer-orders-body');
+    const titleEl = el('customer-orders-title');
+    const linkAll = el('customer-orders-link-all');
+    if (!body) return;
+
+    body.innerHTML = '<p class="text-muted text-center py-4">Đang tải đơn hàng...</p>';
+    if (linkAll) linkAll.href = `orders.html?user_id=${userId}`;
+    new bootstrap.Modal(el('customerOrdersModal')).show();
+
+    try {
+        const res = await fetch(`${ADMIN_API_URLS.customers}?user_id=${userId}`);
+        const data = await res.json();
+        if (data.error) throw new Error(data.message);
+
+        const customer = data.customer;
+        const orders = data.orders || [];
+        if (titleEl) titleEl.textContent = customer.full_name;
+
+        if (!orders.length) {
+            body.innerHTML = '<p class="text-muted text-center py-4">Tài khoản này chưa có đơn hàng.</p>';
+            return;
+        }
+
+        body.innerHTML = `
+            <div class="row g-3 mb-4">
+                <div class="col-md-4"><strong>Họ tên:</strong> ${escapeHTML(customer.full_name)}</div>
+                <div class="col-md-4"><strong>Email:</strong> ${escapeHTML(customer.email || '—')}</div>
+                <div class="col-md-4"><strong>SĐT:</strong> ${escapeHTML(customer.phone || '—')}</div>
+            </div>
+            <p class="small text-muted mb-3">Tổng <strong>${orders.length}</strong> đơn hàng gắn với tài khoản #${customer.id}</p>
+            <div class="accordion" id="customer-orders-accordion">
+                ${orders.map((o, idx) => `
+                    <div class="accordion-item border rounded mb-2 overflow-hidden">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button ${idx === 0 ? '' : 'collapsed'}" type="button" data-bs-toggle="collapse" data-bs-target="#cust-order-${o.id}">
+                                <span class="me-2"><strong>#${escapeHTML(o.order_code || o.id)}</strong></span>
+                                <span class="text-muted small me-2">${formatDate(o.order_date || o.created_at)}</span>
+                                <span class="status-badge ${o.status} me-2">${getStatusText(o.status)}</span>
+                                <span class="ms-auto fw-bold text-danger">${formatCurrency(o.total_amount)}</span>
+                            </button>
+                        </h2>
+                        <div id="cust-order-${o.id}" class="accordion-collapse collapse ${idx === 0 ? 'show' : ''}" data-bs-parent="#customer-orders-accordion">
+                            <div class="accordion-body bg-light">
+                                <div class="row g-2 small mb-3">
+                                    <div class="col-md-6"><strong>Người nhận:</strong> ${escapeHTML(o.customer_name)} — ${escapeHTML(o.phone || '')}</div>
+                                    <div class="col-md-6"><strong>Thanh toán:</strong> ${getOrderPaymentMethodLabel(o.payment_method)} · ${o.payment_status === 'paid' ? 'Đã thanh toán' : 'Chưa thanh toán'}</div>
+                                    <div class="col-12"><strong>Địa chỉ giao:</strong> ${escapeHTML(o.address || '—')}</div>
+                                    <div class="col-12"><strong>Ghi chú:</strong> ${escapeHTML(o.notes || 'Không có')}</div>
+                                </div>
+                                <table class="admin-table table-sm bg-white mb-0">
+                                    <thead><tr><th>Mã SP</th><th>Sản phẩm</th><th>SL</th><th class="text-end">Thành tiền</th></tr></thead>
+                                    <tbody>${renderCustomerOrderItemsRows(o.items)}</tbody>
+                                </table>
+                                <div class="mt-2 text-end">
+                                    <a href="orders.html?user_id=${userId}" class="btn btn-sm btn-outline-primary">Quản lý trên trang đơn hàng</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    } catch (err) {
+        const local = adminCustomers.find(c => c.id === userId);
+        const demoOrders = (typeof DEMO_ORDERS !== 'undefined' ? DEMO_ORDERS : []).filter(o => o.user_id === userId);
+        if (local && demoOrders.length) {
+            if (titleEl) titleEl.textContent = local.full_name;
+            body.innerHTML = `
+                <p class="small text-warning mb-3">Đang dùng dữ liệu mẫu (không kết nối được API).</p>
+                <div class="accordion" id="customer-orders-accordion">
+                    ${demoOrders.map((o, idx) => `
+                        <div class="accordion-item border rounded mb-2">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button ${idx === 0 ? '' : 'collapsed'}" type="button" data-bs-toggle="collapse" data-bs-target="#cust-order-${o.id}">
+                                    <strong>#${o.order_code}</strong> — ${formatCurrency(o.total_amount)} — <span class="status-badge ${o.status}">${getStatusText(o.status)}</span>
+                                </button>
+                            </h2>
+                            <div id="cust-order-${o.id}" class="accordion-collapse collapse ${idx === 0 ? 'show' : ''}">
+                                <div class="accordion-body">
+                                    <table class="admin-table table-sm"><tbody>
+                                        ${(o.items || []).map(i => `<tr><td>${escapeHTML(i.product_name)}</td><td>x${i.quantity}</td><td>${formatCurrency(i.unit_price * i.quantity)}</td></tr>`).join('')}
+                                    </tbody></table>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            return;
+        }
+        body.innerHTML = `<p class="text-danger text-center py-4">Không tải được đơn hàng: ${escapeHTML(err.message || 'Lỗi')}</p>`;
+    }
 }
 
 // =================== NEWS ===================
