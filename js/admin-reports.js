@@ -1,8 +1,7 @@
 /**
  * admin-reports.js — Báo cáo thống kê theo ngày / tuần / tháng
+ * Dùng escapeHTML, formatCurrency từ admin.js (load trước file này)
  */
-
-const { escapeHTML, formatCurrency } = window.MotoShared || {};
 
 let currentReportPeriod = 'today';
 let stockInventoryData = [];
@@ -298,3 +297,10 @@ function loadReportsDemo(period) {
     };
     renderStockInventory(summary, stockItems);
 }
+
+// Tải lại báo cáo khi quay lại tab (sau khi xử lý đơn ở trang khác)
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && document.getElementById('report-orders-total')) {
+        loadReports(currentReportPeriod);
+    }
+});

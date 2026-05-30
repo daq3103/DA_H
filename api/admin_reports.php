@@ -20,18 +20,19 @@ if (!in_array($period, $allowed, true)) {
     $period = 'today';
 }
 
-/** Điều kiện SQL theo khoảng thời gian (cột created_at) */
-function reportDateWhere($period) {
+/** Điều kiện SQL theo khoảng thời gian (cột ngày tùy chọn) */
+function reportDateWhere($period, $column = 'created_at') {
+    $col = preg_replace('/[^a-z_.]/', '', $column);
     switch ($period) {
         case 'today':
-            return "DATE(created_at) = CURDATE()";
+            return "DATE($col) = CURDATE()";
         case 'week':
-            return "created_at >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY)
-                    AND created_at < DATE_ADD(DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY), INTERVAL 7 DAY)";
+            return "$col >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY)
+                    AND $col < DATE_ADD(DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY), INTERVAL 7 DAY)";
         case 'month':
-            return "YEAR(created_at) = YEAR(CURDATE()) AND MONTH(created_at) = MONTH(CURDATE())";
+            return "YEAR($col) = YEAR(CURDATE()) AND MONTH($col) = MONTH(CURDATE())";
         case 'year':
-            return "YEAR(created_at) = YEAR(CURDATE())";
+            return "YEAR($col) = YEAR(CURDATE())";
         default:
             return "1=1";
     }
@@ -46,32 +47,34 @@ $labels = [
 ];
 
 try {
-    $where = reportDateWhere($period);
+    $whereCreated = reportDateWhere($period, 'created_at');
+    $whereCompleted = reportDateWhere($period, 'updated_at');
 
-    $ordersTotal = (int)$pdo->query("SELECT COUNT(*) FROM orders WHERE $where")->fetchColumn();
+    // Đơn đặt trong kỳ (theo ngày tạo đơn)
+    $ordersTotal = (int)$pdo->query("SELECT COUNT(*) FROM orders WHERE $whereCreated")->fetchColumn();
+    $ordersPending = (int)$pdo->query("SELECT COUNT(*) FROM orders WHERE status = 'pending' AND $whereCreated")->fetchColumn();
+    $ordersCancelled = (int)$pdo->query("SELECT COUNT(*) FROM orders WHERE status = 'cancelled' AND $whereCreated")->fetchColumn();
+    $ordersContacted = (int)$pdo->query("SELECT COUNT(*) FROM orders WHERE status = 'contacted' AND $whereCreated")->fetchColumn();
 
-    $ordersCompleted = (int)$pdo->query("SELECT COUNT(*) FROM orders WHERE status = 'completed' AND $where")->fetchColumn();
-    $ordersPending = (int)$pdo->query("SELECT COUNT(*) FROM orders WHERE status = 'pending' AND $where")->fetchColumn();
-    $ordersCancelled = (int)$pdo->query("SELECT COUNT(*) FROM orders WHERE status = 'cancelled' AND $where")->fetchColumn();
-    $ordersContacted = (int)$pdo->query("SELECT COUNT(*) FROM orders WHERE status = 'contacted' AND $where")->fetchColumn();
+    // Hoàn thành & doanh thu: theo ngày cập nhật (khi admin đánh dấu hoàn thành)
+    $ordersCompleted = (int)$pdo->query("SELECT COUNT(*) FROM orders WHERE status = 'completed' AND $whereCompleted")->fetchColumn();
+    $revenue = (float)$pdo->query("SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE status = 'completed' AND $whereCompleted")->fetchColumn();
 
-    $revenue = (float)$pdo->query("SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE status = 'completed' AND $where")->fetchColumn();
+    $newCustomers = (int)$pdo->query("SELECT COUNT(*) FROM users WHERE role = 'customer' AND $whereCreated")->fetchColumn();
 
-    $userWhere = str_replace('created_at', 'created_at', reportDateWhere($period));
-    $newCustomers = (int)$pdo->query("SELECT COUNT(*) FROM users WHERE role = 'customer' AND $userWhere")->fetchColumn();
-
-    $orderWhere = str_replace('created_at', 'o.created_at', reportDateWhere($period));
+    $orderWhereCreated = str_replace('created_at', 'o.created_at', $whereCreated);
+    $orderWhereCompleted = str_replace('updated_at', 'o.updated_at', $whereCompleted);
 
     // Thống kê đơn theo số điện thoại (trong kỳ)
     $phoneRows = $pdo->query("
-        SELECT shipping_phone, shipping_name,
+        SELECT o.shipping_phone, o.shipping_name,
                COUNT(*) AS order_count,
-               SUM(total_amount) AS total_amount,
-               SUM(CASE WHEN status = 'completed' THEN total_amount ELSE 0 END) AS completed_amount,
-               SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled_count
+               SUM(o.total_amount) AS total_amount,
+               SUM(CASE WHEN o.status = 'completed' AND ($orderWhereCompleted) THEN o.total_amount ELSE 0 END) AS completed_amount,
+               SUM(CASE WHEN o.status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled_count
         FROM orders o
-        WHERE $orderWhere
-        GROUP BY shipping_phone, shipping_name
+        WHERE $orderWhereCreated
+        GROUP BY o.shipping_phone, o.shipping_name
         ORDER BY order_count DESC, total_amount DESC
     ")->fetchAll(PDO::FETCH_ASSOC);
 
@@ -100,7 +103,7 @@ try {
         INNER JOIN orders o ON oi.order_id = o.id
         LEFT JOIN products p ON oi.product_id = p.id
         LEFT JOIN brands b ON p.brand_id = b.id
-        WHERE $orderWhere AND o.status != 'cancelled'
+        WHERE o.status = 'completed' AND ($orderWhereCompleted)
         GROUP BY oi.product_id, p.name, p.slug, b.name
         ORDER BY qty_sold DESC, revenue DESC
     ")->fetchAll(PDO::FETCH_ASSOC);

@@ -1,9 +1,13 @@
 // =================== ORDERS ===================
-const { escapeHTML, formatCurrency, formatDate } = window.MotoShared || {};
+(function () {
+'use strict';
+
+const { escapeHTML, formatCurrency, formatDateVN: formatDate } = window.motoShared;
+const ORDER_API_URL = '../api/admin_orders.php';
+
 let adminOrders = [];
 let paymentFilter = 'all';
 let ordersUserIdFilter = null;
-const ORDER_API_URL = API_BASE + 'admin_orders.php';
 const ORDER_STATUS_KEYS = ['pending', 'contacted', 'completed', 'cancelled'];
 const ORDER_STAT_FIELD_IDS = {
     pending: 'order-stat-pending',
@@ -82,24 +86,36 @@ function renderOrderAccountCell(order) {
 }
 
 async function loadOrders() {
+    const tbody = document.getElementById('orders-tbody');
     const params = new URLSearchParams(window.location.search);
     const uid = params.get('user_id');
     const url = uid ? `${ORDER_API_URL}?user_id=${encodeURIComponent(uid)}` : ORDER_API_URL;
 
     try {
         const res = await fetch(url);
-        adminOrders = await res.json();
-        if (adminOrders.error) throw new Error();
+        const data = await res.json();
+        if (!res.ok || data.error) throw new Error(data.message || 'API lỗi');
+        if (!Array.isArray(data)) throw new Error('Dữ liệu không hợp lệ');
+        adminOrders = data;
     } catch (err) {
-        adminOrders = [...DEMO_ORDERS];
+        console.warn('loadOrders:', err);
+        adminOrders = [...(typeof DEMO_ORDERS !== 'undefined' ? DEMO_ORDERS : [])];
         if (uid) {
             const userId = parseInt(uid, 10);
             adminOrders = adminOrders.filter(o => o.user_id === userId);
         }
     }
-    initOrdersUserFilter();
-    renderOrdersTable(getFilteredOrders());
-    updateOrderStats();
+
+    try {
+        initOrdersUserFilter();
+        renderOrdersTable(getFilteredOrders());
+        updateOrderStats();
+    } catch (renderErr) {
+        console.error('renderOrders:', renderErr);
+        if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="10" class="text-center text-danger py-4">Lỗi hiển thị đơn hàng: ${escapeHTML(String(renderErr.message || renderErr))}</td></tr>`;
+        }
+    }
 }
 
 function setTextById(id, value) {
@@ -118,7 +134,7 @@ function updateOrderStats() {
     }, {});
 
     adminOrders.forEach(order => {
-        if (stats[order.status] !== undefined) stats[status] += 1;
+        if (stats[order.status] !== undefined) stats[order.status] += 1;
     });
 
     ORDER_STATUS_KEYS.forEach(status => {
@@ -394,3 +410,13 @@ function printAdminInvoice() {
     printWindow.document.write(html);
     printWindow.document.close();
 }
+
+window.loadOrders = loadOrders;
+window.filterOrdersByPayment = filterOrdersByPayment;
+window.filterOrders = filterOrders;
+window.updateOrderStatus = updateOrderStatus;
+window.confirmCodPayment = confirmCodPayment;
+window.viewOrderDetail = viewOrderDetail;
+window.printAdminInvoice = printAdminInvoice;
+
+})();
